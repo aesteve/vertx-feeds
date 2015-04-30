@@ -1,0 +1,37 @@
+plugins {
+	id 'java'
+	id 'eclipse'
+	id 'idea'
+	id 'com.github.johnrengelman.shadow' version '1.2.1'
+}
+
+repositories {
+	mavenLocal()
+	mavenCentral()
+	maven { url 'http://oss.sonatype.org/content/repositories/snapshots/' }
+}
+
+dependencies {
+	compile 'io.vertx:vertx-core:3.0.0-SNAPSHOT'
+	compile 'io.vertx:vertx-apex:3.0.0-SNAPSHOT'
+}
+
+shadowJar  {
+    classifier = ''
+    manifest {
+        attributes 'Main-Class': 'io.vertx.core.Starter'
+        attributes 'Main-Verticle': 'java:io.vertx.feeds.verticles.MainVerticle'
+    }
+    mergeServiceFiles {
+        include 'META-INF/services/io.vertx.core.spi.VerticleFactory'
+    }
+    dependencies {
+        exclude(dependency('io.vertx:codegen'))
+        exclude(dependency('junit:junit'))
+        exclude(dependency('org.mvel:mvel2'))
+    }
+}
+
+task wrapper(type: Wrapper) {
+	gradleVersion = '2.3'
+}
