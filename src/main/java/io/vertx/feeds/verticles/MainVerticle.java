@@ -5,6 +5,7 @@ import java.util.List;
 
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Context;
+import io.vertx.core.DeploymentOptions;
 import io.vertx.core.Future;
 import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonObject;
@@ -36,7 +37,9 @@ public class MainVerticle extends AbstractVerticle {
         mongo.start();
         broker = new FeedBroker(mongo);
         server = new WebServer(mongo);
-        vertx.deployVerticle(broker, brokerResult -> {
+        DeploymentOptions brokerOptions = new DeploymentOptions();
+        brokerOptions.setWorker(true);
+        vertx.deployVerticle(broker, brokerOptions, brokerResult -> {
             if (brokerResult.failed()) {
                 future.fail(brokerResult.cause());
             } else {
