@@ -1,0 +1,25 @@
+{{#partial "content" }}
+	<h2>Login</h2>
+	<form id="login-box" action="/api/register" method="POST">
+		<table>
+			<tr>
+				<td>Choose a login</td>
+				<td><input name="login" type="text" /></td>
+			</tr>
+			<tr>
+				<td>And a password</td>
+				<td><input name="password" type="password" /></td>
+			</tr>
+			<tr>
+				<td>And a password</td>
+				<td><input name="password" type="password" /></td>
+			</tr>
+			<tr>
+				<td></td>
+				<td><input type="submit" class="button" value="Create account" /></td>
+			</tr>
+			
+		</table>
+	</form>
+{{/partial}}
+{{> templates/layout.hbs}}

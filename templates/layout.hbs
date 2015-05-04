@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html>
+    <head>
+		<link rel="stylesheet" type="text/css" href="/assets/stylesheets/libs/foundation.min.css">
+		<link rel="stylesheet" type="text/css" href="/assets/stylesheets/main.css">
+    </head>
+    <body>
+		<div id="main-menu">
+			<nav class="top-bar" data-topbar role="navigation">
+				<ul class="title-area">
+					<li class="name">
+						<h1><a href="#" class="active">Vertx Feeds</a></h1>
+					</li>
+					<li class="toggle-topbar menu-icon"><a href="#"><span>Menu</span></a></li>
+				</ul>
+
+				<section class="top-bar-section">
+					<ul class="right">
+						{{#if userLogin}}
+						<li><a href="#">Hello, {{userLogin}}</a></li>
+						{{else}}
+						<li><a href="/login.hbs">Log in</a></li>
+						{{/if}}
+					</ul>
+					<ul class="left">
+						<li><a href="/news.hbs">My news feed</a></li>
+						<li><a href="/manage.hbs">Manage feeds</a></li>
+					</ul>
+				</section>
+			</nav>
+		</div>
+
+		{{#block "content" }}
+		{{/block}}
+	</body>
+</html>

@@ -1,0 +1,70 @@
+body {
+	font-family:Arial;
+	background-color:rgb(247, 247, 247);
+	width:100%;
+	font-size: 1em;
+}
+
+.row {
+	max-width:100%;
+}
+
+.row .row {
+	margin:0;
+}
+
+.column {
+	padding:0;
+}
+
+.row .columns, .row .column {
+	padding-right: 10px;
+}
+
+.row .columns:last-child, .row .column:last-child {
+	padding-right:0!important;
+}
+
+footer {
+	background-color:#222;
+	color:white;
+	padding:0.5em;
+	box-shadow:rgb(204, 204, 204) 0px 0px 3px 2px;
+	border-top:1px solid #008cba;
+	box-sizing:border-box;
+	height:35px;
+	/*line-height:35px;*/
+	position:fixed;
+	bottom:0;
+	width:100%;
+}
+
+#main-menu {
+	border-bottom:3px solid #008cba;
+	box-shadow:rgba(0, 0, 0, 0.239216) 0px 3px 4px;
+	margin-bottom:20px;
+}
+
+h1 {
+    font-size:1.4em;
+}
+
+h2 {
+    font-size:1.3em;
+    width:100%;
+    text-align:center;
+}
+
+
+#login-box {
+	width: 50%;
+	border:1px solid #CCC;
+	padding:1px;
+	background-color:1px solid #F4F4F4;
+	margin: 0 auto;
+}
+
+#login-box table {
+	width:100%;
+	margin: 0;
+}

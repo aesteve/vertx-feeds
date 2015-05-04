@@ -12,8 +12,17 @@ repositories {
 }
 
 dependencies {
+    
+    // Vert.x standard
 	compile 'io.vertx:vertx-core:3.0.0-SNAPSHOT'
 	compile 'io.vertx:vertx-apex:3.0.0-SNAPSHOT'
+    
+    // MongoDB
+    compile 'io.vertx:vertx-mongo-service:3.0.0-SNAPSHOT'
+    
+    // Handlebars
+    compile 'com.github.jknack:handlebars:2.1.0'
+    
 }
 
 shadowJar  {
@@ -30,6 +39,10 @@ shadowJar  {
         exclude(dependency('junit:junit'))
         exclude(dependency('org.mvel:mvel2'))
     }
+}
+
+task start(dependsOn: shadowJar) << {
+    javaexec { main="-jar"; args shadowJar.archivePath }
 }
 
 task wrapper(type: Wrapper) {

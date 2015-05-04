@@ -1,0 +1,8 @@
+{{#partial "content" }}
+	<h2>Index page</h2>
+	<p>Vertx-Feeds is a very simple feed aggregator created to demonstrate how to build a complete application with Vert.x 3, Apex, MongoDB and Redis.</p>
+	{{#if accessToken}}
+		<p>You're logged in, and your access token is : {{accessToken}}</p>
+	{{/if}}
+{{/partial}}
+{{> templates/layout.hbs}}
