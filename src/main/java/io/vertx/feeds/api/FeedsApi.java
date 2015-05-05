@@ -4,7 +4,7 @@ import io.vertx.core.http.HttpServerResponse;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.apex.RoutingContext;
-import io.vertx.ext.mongo.MongoService;
+import io.vertx.ext.mongo.MongoClient;
 import io.vertx.feeds.utils.StringUtils;
 import io.vertx.feeds.utils.UserUtils;
 
@@ -13,10 +13,10 @@ import io.vertx.feeds.utils.UserUtils;
  */
 public class FeedsApi {
 
-    private MongoService mongo;
+    private MongoClient mongo;
     private StringUtils strUtils;
 
-    public FeedsApi(MongoService mongo) {
+    public FeedsApi(MongoClient mongo) {
         this.mongo = mongo;
         this.strUtils = new StringUtils();
     }

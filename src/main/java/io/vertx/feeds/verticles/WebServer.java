@@ -16,7 +16,7 @@ import io.vertx.ext.apex.handler.StaticHandler;
 import io.vertx.ext.apex.handler.TemplateHandler;
 import io.vertx.ext.apex.sstore.SessionStore;
 import io.vertx.ext.apex.templ.HandlebarsTemplateEngine;
-import io.vertx.ext.mongo.MongoService;
+import io.vertx.ext.mongo.MongoClient;
 import io.vertx.feeds.api.AuthenticationApi;
 import io.vertx.feeds.api.FeedsApi;
 import io.vertx.ext.apex.sstore.LocalSessionStore;
@@ -27,9 +27,9 @@ public class WebServer extends AbstractVerticle {
 
     private AuthenticationApi authApi;
     private FeedsApi feedsApi;
-    private MongoService mongo;
+    private MongoClient mongo;
 
-    public WebServer(MongoService mongo) {
+    public WebServer(MongoClient mongo) {
         this.mongo = mongo;
     }
 

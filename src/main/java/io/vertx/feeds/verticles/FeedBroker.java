@@ -7,7 +7,7 @@ import io.vertx.core.http.HttpClientOptions;
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.logging.Logger;
 import io.vertx.core.logging.impl.LoggerFactory;
-import io.vertx.ext.mongo.MongoService;
+import io.vertx.ext.mongo.MongoClient;
 import io.vertx.feeds.utils.async.MultipleFutures;
 import io.vertx.feeds.utils.rss.FeedUtils;
 
@@ -27,10 +27,10 @@ public class FeedBroker extends AbstractVerticle {
     private final static Long POLL_PERIOD = 60000l;
     private final static Logger log = LoggerFactory.getLogger(FeedBroker.class);
 
-    private MongoService mongo;
+    private MongoClient mongo;
     private Long timerId;
 
-    public FeedBroker(MongoService mongo) {
+    public FeedBroker(MongoClient mongo) {
         this.mongo = mongo;
     }
 

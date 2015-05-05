@@ -4,13 +4,13 @@ import io.vertx.core.Handler;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.apex.RoutingContext;
 import io.vertx.ext.apex.Session;
-import io.vertx.ext.mongo.MongoService;
+import io.vertx.ext.mongo.MongoClient;
 
 import java.util.List;
 
 public class UserUtils {
 
-    public static void getUserFromContext(RoutingContext context, MongoService mongo, Handler<JsonObject> userHandler) {
+    public static void getUserFromContext(RoutingContext context, MongoClient mongo, Handler<JsonObject> userHandler) {
         Session session = context.session();
         String userId = session.get("userId");
         if (userId == null) {

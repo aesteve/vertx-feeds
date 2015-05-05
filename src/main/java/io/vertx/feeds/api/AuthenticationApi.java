@@ -1,7 +1,5 @@
 package io.vertx.feeds.api;
 
-import java.util.List;
-
 import io.vertx.core.http.HttpServerResponse;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
@@ -9,17 +7,19 @@ import io.vertx.core.logging.Logger;
 import io.vertx.core.logging.impl.LoggerFactory;
 import io.vertx.ext.apex.RoutingContext;
 import io.vertx.ext.apex.Session;
-import io.vertx.ext.mongo.MongoService;
+import io.vertx.ext.mongo.MongoClient;
 import io.vertx.feeds.utils.StringUtils;
+
+import java.util.List;
 
 public class AuthenticationApi {
 
     private final static Logger log = LoggerFactory.getLogger(AuthenticationApi.class);
 
-    private MongoService mongo;
+    private MongoClient mongo;
     private StringUtils strUtils;
 
-    public AuthenticationApi(MongoService mongo) {
+    public AuthenticationApi(MongoClient mongo) {
         this.mongo = mongo;
         this.strUtils = new StringUtils();
     }

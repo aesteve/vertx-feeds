@@ -1,22 +1,22 @@
 package io.vertx.feeds.verticles;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Context;
 import io.vertx.core.DeploymentOptions;
 import io.vertx.core.Future;
 import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonObject;
-import io.vertx.ext.mongo.MongoService;
+import io.vertx.ext.mongo.MongoClient;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Main verticle, orchestrate the instanciation of other verticles
  */
 public class MainVerticle extends AbstractVerticle {
 
-    private MongoService mongo;
+    private MongoClient mongo;
     private FeedBroker broker;
     private WebServer server;
     private List<String> deploymentIds;
@@ -33,8 +33,7 @@ public class MainVerticle extends AbstractVerticle {
      */
     @Override
     public void start(Future<Void> future) {
-        mongo = MongoService.create(vertx, mongoConfig());
-        mongo.start();
+        mongo = MongoClient.createNonShared(vertx, mongoConfig());
         broker = new FeedBroker(mongo);
         server = new WebServer(mongo);
         DeploymentOptions brokerOptions = new DeploymentOptions();
@@ -61,7 +60,7 @@ public class MainVerticle extends AbstractVerticle {
      */
     @Override
     public void stop(Future<Void> future) {
-        mongo.stop();
+        mongo.close();
         deploymentIds.forEach(deploymentId -> {
             vertx.undeploy(deploymentId);
         });
