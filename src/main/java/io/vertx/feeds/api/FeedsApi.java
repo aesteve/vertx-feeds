@@ -1,7 +1,5 @@
 package io.vertx.feeds.api;
 
-import java.util.Optional;
-
 import io.vertx.core.http.HttpServerResponse;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
@@ -30,7 +28,7 @@ public class FeedsApi {
             final String urlHash = strUtils.hash256(body.getString("url"));
             if (subscriptions == null) {
                 subscriptions = new JsonArray();
-            } 
+            }
             body.put("hash", urlHash);
             subscriptions.add(body);
             JsonObject query = new JsonObject();
@@ -41,11 +39,11 @@ public class FeedsApi {
                 if (result.failed()) {
                     context.fail(result.cause());
                 } else {
-                    // TODO : read first
-                	mongo.insert("feeds", body, insertResult -> {
+                    /* TODO : read first */
+                    mongo.insert("feeds", body, insertResult -> {
                         HttpServerResponse response = context.response();
                         response.end(body.toString());
-                	});
+                    });
                 }
             });
         });
