@@ -30,17 +30,8 @@ public class FeedsApi {
             final String urlHash = strUtils.hash256(body.getString("url"));
             if (subscriptions == null) {
                 subscriptions = new JsonArray();
-            } else {
-                Optional<Object> optional = subscriptions.stream().filter(item -> {
-                    JsonObject subscription = (JsonObject) item;
-                    return subscription.getString("id") != null && subscription.getString("id").equals(urlHash);
-                }).findFirst();
-                if (optional.isPresent()) {
-                    context.response().end();
-                    return;
-                }
-            }
-            body.put("id", urlHash);
+            } 
+            body.put("hash", urlHash);
             subscriptions.add(body);
             JsonObject query = new JsonObject();
             query.put("_id", user.getString("_id"));
@@ -50,8 +41,11 @@ public class FeedsApi {
                 if (result.failed()) {
                     context.fail(result.cause());
                 } else {
-                    HttpServerResponse response = context.response();
-                    response.end("");
+                    // TODO : read first
+                	mongo.insert("feeds", body, insertResult -> {
+                        HttpServerResponse response = context.response();
+                        response.end(body.toString());
+                	});
                 }
             });
         });

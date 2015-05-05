@@ -5,6 +5,8 @@ import java.util.List;
 import io.vertx.core.http.HttpServerResponse;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
+import io.vertx.core.logging.Logger;
+import io.vertx.core.logging.impl.LoggerFactory;
 import io.vertx.ext.apex.RoutingContext;
 import io.vertx.ext.apex.Session;
 import io.vertx.ext.mongo.MongoService;
@@ -12,6 +14,8 @@ import io.vertx.feeds.utils.StringUtils;
 
 public class AuthenticationApi {
 
+	private final static Logger log = LoggerFactory.getLogger(AuthenticationApi.class);
+	
     private MongoService mongo;
     private StringUtils strUtils;
 
@@ -53,6 +57,7 @@ public class AuthenticationApi {
                     JsonObject user = users.get(0);
                     Session session = context.session();
                     String accessToken = strUtils.generateToken();
+                    log.debug("Generated token : "+accessToken);
                     session.put("accessToken", accessToken);
                     context.vertx().sharedData().getLocalMap("access_tokens").put(accessToken, user.getString("_id"));
                     redirectTo(context, "/index.hbs");

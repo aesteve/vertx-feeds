@@ -23,6 +23,8 @@ dependencies {
     // Handlebars
     compile 'com.github.jknack:handlebars:2.1.0'
     
+	// RSS
+	compile 'com.rometools:rome:1.5.0'
 }
 
 shadowJar  {
