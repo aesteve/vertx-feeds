@@ -108,6 +108,17 @@ public class WebServer extends AbstractVerticle {
     }
 
     private void mapApiRoutes(Router router) {
+    	/*
+    	TODO : provide authentication through the AuthService / AuthProvider instead of a custom api handler
+    	TODO : every page except login must be private
+    	TODO : use FormLoginHandler for the actual login form
+    	TODO : use RedirectAuthHandler for "/private"
+    	
+    	router.route().handler(CookieHandler.create());
+    	router.route().handler(SessionHandler.create(LocalSessionStore.create(vertx)));
+    	
+    	AuthProvider provider = 
+    	*/
         router.route("/api/*").handler(BodyHandler.create());
 
         /* login / user-related stuff */
