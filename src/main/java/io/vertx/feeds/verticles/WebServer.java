@@ -6,6 +6,7 @@ import io.vertx.core.Future;
 import io.vertx.core.Vertx;
 import io.vertx.core.http.HttpServer;
 import io.vertx.core.http.HttpServerOptions;
+import io.vertx.core.json.JsonObject;
 import io.vertx.ext.apex.Router;
 import io.vertx.ext.apex.Session;
 import io.vertx.ext.apex.handler.BodyHandler;
@@ -14,12 +15,11 @@ import io.vertx.ext.apex.handler.ErrorHandler;
 import io.vertx.ext.apex.handler.SessionHandler;
 import io.vertx.ext.apex.handler.StaticHandler;
 import io.vertx.ext.apex.handler.TemplateHandler;
+import io.vertx.ext.apex.sstore.LocalSessionStore;
 import io.vertx.ext.apex.sstore.SessionStore;
 import io.vertx.ext.apex.templ.HandlebarsTemplateEngine;
-import io.vertx.ext.mongo.MongoClient;
 import io.vertx.feeds.api.AuthenticationApi;
 import io.vertx.feeds.api.FeedsApi;
-import io.vertx.ext.apex.sstore.LocalSessionStore;
 
 public class WebServer extends AbstractVerticle {
 
@@ -27,17 +27,17 @@ public class WebServer extends AbstractVerticle {
 
     private AuthenticationApi authApi;
     private FeedsApi feedsApi;
-    private MongoClient mongo;
+    private JsonObject mongoConfig;
 
-    public WebServer(MongoClient mongo) {
-        this.mongo = mongo;
+    public WebServer(JsonObject mongoConfig) {
+        this.mongoConfig = mongoConfig;
     }
 
     @Override
     public void init(Vertx vertx, Context context) {
         super.init(vertx, context);
-        authApi = new AuthenticationApi(mongo);
-        feedsApi = new FeedsApi(mongo);
+        authApi = new AuthenticationApi(mongoConfig);
+        feedsApi = new FeedsApi(mongoConfig);
     }
 
     @Override
@@ -108,17 +108,17 @@ public class WebServer extends AbstractVerticle {
     }
 
     private void mapApiRoutes(Router router) {
-    	/*
-    	TODO : provide authentication through the AuthService / AuthProvider instead of a custom api handler
-    	TODO : every page except login must be private
-    	TODO : use FormLoginHandler for the actual login form
-    	TODO : use RedirectAuthHandler for "/private"
-    	
-    	router.route().handler(CookieHandler.create());
-    	router.route().handler(SessionHandler.create(LocalSessionStore.create(vertx)));
-    	
-    	AuthProvider provider = 
-    	*/
+        /*
+         * TODO : provide authentication through the AuthService / AuthProvider instead of a custom api handler
+         * TODO : every page except login must be private
+         * TODO : use FormLoginHandler for the actual login form
+         * TODO : use RedirectAuthHandler for "/private"
+         * 
+         * router.route().handler(CookieHandler.create());
+         * router.route().handler(SessionHandler.create(LocalSessionStore.create(vertx)));
+         * 
+         * AuthProvider provider =
+         */
         router.route("/api/*").handler(BodyHandler.create());
 
         /* login / user-related stuff */

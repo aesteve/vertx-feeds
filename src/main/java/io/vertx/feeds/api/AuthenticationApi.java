@@ -1,5 +1,6 @@
 package io.vertx.feeds.api;
 
+import io.vertx.core.Vertx;
 import io.vertx.core.http.HttpServerResponse;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
@@ -19,8 +20,8 @@ public class AuthenticationApi {
     private MongoClient mongo;
     private StringUtils strUtils;
 
-    public AuthenticationApi(MongoClient mongo) {
-        this.mongo = mongo;
+    public AuthenticationApi(JsonObject mongoConfig) {
+        this.mongo = MongoClient.createShared(Vertx.vertx(), mongoConfig);
         this.strUtils = new StringUtils();
     }
 

@@ -16,10 +16,10 @@ import java.util.List;
  */
 public class MainVerticle extends AbstractVerticle {
 
-    private MongoClient mongo;
     private FeedBroker broker;
     private WebServer server;
     private List<String> deploymentIds;
+    private MongoClient mongo;
 
     @Override
     public void init(Vertx vertx, Context context) {
@@ -33,9 +33,10 @@ public class MainVerticle extends AbstractVerticle {
      */
     @Override
     public void start(Future<Void> future) {
-        mongo = MongoClient.createNonShared(vertx, mongoConfig());
-        broker = new FeedBroker(mongo);
-        server = new WebServer(mongo);
+        JsonObject mongoConfig = mongoConfig();
+        mongo = MongoClient.createShared(vertx, mongoConfig);
+        broker = new FeedBroker(mongoConfig);
+        server = new WebServer(mongoConfig);
         DeploymentOptions brokerOptions = new DeploymentOptions();
         brokerOptions.setWorker(true);
         vertx.deployVerticle(broker, brokerOptions, brokerResult -> {
