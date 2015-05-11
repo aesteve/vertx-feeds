@@ -38,7 +38,7 @@ public class MainVerticle extends AbstractVerticle {
         broker = new FeedBroker(mongoConfig);
         server = new WebServer(mongoConfig);
         DeploymentOptions brokerOptions = new DeploymentOptions();
-        brokerOptions.setWorker(true);
+        // brokerOptions.setWorker(true); // not a worker for now, since it's just doing async stuff
         vertx.deployVerticle(broker, brokerOptions, brokerResult -> {
             if (brokerResult.failed()) {
                 future.fail(brokerResult.cause());
