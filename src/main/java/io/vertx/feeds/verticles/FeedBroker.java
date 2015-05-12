@@ -1,6 +1,7 @@
 package io.vertx.feeds.verticles;
 
 import io.vertx.core.AbstractVerticle;
+import io.vertx.core.Context;
 import io.vertx.core.Future;
 import io.vertx.core.Vertx;
 import io.vertx.core.http.HttpClient;
@@ -11,6 +12,7 @@ import io.vertx.core.logging.impl.LoggerFactory;
 import io.vertx.ext.mongo.MongoClient;
 import io.vertx.feeds.utils.async.MultipleFutures;
 import io.vertx.feeds.utils.rss.FeedUtils;
+import io.vertx.redis.RedisClient;
 
 import java.io.StringReader;
 import java.net.MalformedURLException;
@@ -28,17 +30,29 @@ public class FeedBroker extends AbstractVerticle {
     private final static Long POLL_PERIOD = 60000l;
     private final static Logger log = LoggerFactory.getLogger(FeedBroker.class);
     private MongoClient mongo;
+    private RedisClient redis;
+    private JsonObject config;
 
     private Long timerId;
 
-    public FeedBroker(JsonObject mongoConfig) {
-        mongo = MongoClient.createShared(Vertx.vertx(), mongoConfig);
+    @Override
+    public void init(Vertx vertx, Context context) {
+    	super.init(vertx, context);
+    	config = context.config();
     }
-
+    
     @Override
     public void start(Future<Void> future) {
-        readFeeds();
-        future.complete();
+    	mongo = MongoClient.createShared(vertx, config.getJsonObject("mongo"));
+        redis = RedisClient.create(vertx, config.getJsonObject("redis"));
+    	redis.start(handler -> {
+    		if (handler.succeeded()) {
+                readFeeds();
+                future.complete();
+    		} else {
+    			future.fail(handler.cause());
+    		}
+    	});
     }
 
     @Override
@@ -46,7 +60,14 @@ public class FeedBroker extends AbstractVerticle {
         if (timerId != null) {
             vertx.cancelTimer(timerId);
         }
-        future.complete();
+        mongo.close();
+        redis.stop(handler -> {
+    		if (handler.succeeded()) {
+                future.complete();
+    		} else {
+    			future.fail(handler.cause());
+    		}
+        });
     }
 
     private void readFeeds() {
@@ -65,18 +86,21 @@ public class FeedBroker extends AbstractVerticle {
                         futuresByFeed.put(feed, future);
                     });
                     fetchFeedsFuture.setHandler(fetchResult -> {
+                    	// No matter if failed or succeeded -> re-launch periodically
                         this.timerId = vertx.setTimer(POLL_PERIOD, timerId -> {
                             this.readFeeds();
                         });
                     });
                     futuresByFeed.forEach((feed, future) -> {
-                        readFeed(feed.getString("url"), future);
+                        readFeed(feed, future);
                     });
                 }
             });
     }
 
-    public void readFeed(String feedUrl, Future<Void> future) {
+    public void readFeed(JsonObject jsonFeed, Future<Void> future) {
+    	String feedUrl = jsonFeed.getString("url");
+    	String feedId = jsonFeed.getString("hash");
         URL url;
         try {
             url = new URL(feedUrl);
@@ -104,15 +128,31 @@ public class FeedBroker extends AbstractVerticle {
                     SyndFeed feed = feedInput.build(xmlReader);
                     JsonObject feedJson = FeedUtils.toJson(feed);
                     log.info(feedJson);
+                    List<JsonObject> jsonEntries = FeedUtils.toJson(feed.getEntries());
+                    insertEntriesIntoRedis(feedId, jsonEntries, future);
                 } catch (FeedException fe) {
                     future.fail(fe);
                     return;
                 }
-                future.complete();
             });
         }).putHeader("Accept", "application/xml").end();
     }
 
+    private void insertEntriesIntoRedis(String feedId, List<JsonObject> jsonEntries, Future<Void> future) {
+    	// TODO : check if entry exists ? like check hash ?
+    	Map<String, Double> members = new HashMap<String, Double>(jsonEntries.size());
+    	jsonEntries.forEach(entry -> {
+    		members.put(entry.toString(), entry.getDouble("score"));
+    	});
+    	redis.zaddMany(feedId, members, handler -> {
+    		if (handler.failed()) {
+    			future.fail(handler.cause());
+    		} else {
+    			future.complete();
+    		}
+    	});
+    }
+    
     private HttpClient createClient(URL url) {
         final HttpClientOptions options = new HttpClientOptions();
         options.setDefaultHost(url.getHost());

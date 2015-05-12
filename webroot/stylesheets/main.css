@@ -68,3 +68,10 @@ h2 {
 	width:100%;
 	margin: 0;
 }
+
+.content {
+	padding: 20px;
+}
+
+.content h2 {
+	margin-bottom:20px;

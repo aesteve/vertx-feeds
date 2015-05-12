@@ -1,6 +1,5 @@
 package io.vertx.feeds.api;
 
-import io.vertx.core.Vertx;
 import io.vertx.core.http.HttpServerResponse;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
@@ -20,8 +19,8 @@ public class AuthenticationApi {
     private MongoClient mongo;
     private StringUtils strUtils;
 
-    public AuthenticationApi(JsonObject mongoConfig) {
-        this.mongo = MongoClient.createShared(Vertx.vertx(), mongoConfig);
+    public AuthenticationApi(MongoClient mongo) {
+    	this.mongo = mongo;
         this.strUtils = new StringUtils();
     }
 
@@ -47,6 +46,7 @@ public class AuthenticationApi {
         final JsonObject query = new JsonObject();
         query.put("login", login);
         query.put("password", strUtils.hash256(pwd));
+        // FIXME : use mongo.findOne instead
         mongo.find("users", query, result -> {
             if (result.failed()) {
                 context.fail(result.cause());

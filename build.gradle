@@ -19,6 +19,9 @@ dependencies {
     
     // MongoDB
     compile 'io.vertx:vertx-mongo-client:3.0.0-SNAPSHOT'
+	// Redis
+	compile 'io.vertx:vertx-redis-client:3.0.0-SNAPSHOT'
+	
     
     // Handlebars
     compile 'com.github.jknack:handlebars:2.1.0'

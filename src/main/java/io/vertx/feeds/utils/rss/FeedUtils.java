@@ -1,10 +1,11 @@
 package io.vertx.feeds.utils.rss;
 
-import java.text.SimpleDateFormat;
-import java.util.Date;
-
-import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
+
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
 
 import com.rometools.rome.feed.synd.SyndContent;
 import com.rometools.rome.feed.synd.SyndEntry;
@@ -25,21 +26,28 @@ public class FeedUtils {
             // or getLink() ?
         }
         json.put("published", toJson(feed.getPublishedDate()));
-        JsonArray entries = new JsonArray();
-        if (feed.getEntries() != null) {
-            feed.getEntries().forEach(entry -> {
-                entries.add(toJson(entry));
-            });
-        }
-        json.put("entries", entries);
         return json;
 
+    }
+    
+    public static List<JsonObject> toJson(List<SyndEntry> entries) {
+    	List<JsonObject> result = new ArrayList<JsonObject>(entries.size());
+    	entries.forEach(entry -> {
+    		result.add(toJson(entry));
+    	});
+    	return result;
     }
 
     public static JsonObject toJson(SyndEntry entry) {
         JsonObject json = new JsonObject();
         json.put("title", entry.getTitle());
-        json.put("published", toJson(entry.getPublishedDate()));
+        Date published = entry.getPublishedDate();
+        if (published == null) {
+        	// TODO : log warning ? use another date ? 
+        	published = new Date(); // FIXME : absolutely wrong...
+        }
+        json.put("published", toJson(published));
+        json.put("score", Long.valueOf(published.getTime()).doubleValue());
         json.put("link", entry.getLink());
         SyndContent description = entry.getDescription();
         if (description != null) {

@@ -6,7 +6,6 @@ import io.vertx.core.DeploymentOptions;
 import io.vertx.core.Future;
 import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonObject;
-import io.vertx.ext.mongo.MongoClient;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -16,10 +15,7 @@ import java.util.List;
  */
 public class MainVerticle extends AbstractVerticle {
 
-    private FeedBroker broker;
-    private WebServer server;
     private List<String> deploymentIds;
-    private MongoClient mongo;
 
     @Override
     public void init(Vertx vertx, Context context) {
@@ -27,24 +23,22 @@ public class MainVerticle extends AbstractVerticle {
         deploymentIds = new ArrayList<String>(2);
     }
 
-    /**
-     * First, we need to create the Mongo service and start it.
-     * Then : we want to start the broker, and once it's started, we're starting the web/api server
-     */
     @Override
     public void start(Future<Void> future) {
-        JsonObject mongoConfig = mongoConfig();
-        mongo = MongoClient.createShared(vertx, mongoConfig);
-        broker = new FeedBroker(mongoConfig);
-        server = new WebServer(mongoConfig);
+        JsonObject dbConfig = new JsonObject(); 
+        dbConfig.put("redis", redisConfig());
+        dbConfig.put("mongo", mongoConfig());
         DeploymentOptions brokerOptions = new DeploymentOptions();
+        brokerOptions.setConfig(dbConfig);
         // brokerOptions.setWorker(true); // not a worker for now, since it's just doing async stuff
-        vertx.deployVerticle(broker, brokerOptions, brokerResult -> {
+        vertx.deployVerticle(FeedBroker.class.getName(), brokerOptions, brokerResult -> {
             if (brokerResult.failed()) {
                 future.fail(brokerResult.cause());
             } else {
                 deploymentIds.add(brokerResult.result());
-                vertx.deployVerticle(server, serverResult -> {
+                DeploymentOptions webserverOptions = new DeploymentOptions();
+                webserverOptions.setConfig(dbConfig);
+                vertx.deployVerticle(WebServer.class.getName(), webserverOptions, serverResult -> {
                     if (serverResult.failed()) {
                         future.fail(serverResult.cause());
                     } else {
@@ -56,12 +50,8 @@ public class MainVerticle extends AbstractVerticle {
         });
     }
 
-    /**
-     * Stop Mongo, then undeploy every verticle.
-     */
     @Override
     public void stop(Future<Void> future) {
-        mongo.close();
         deploymentIds.forEach(deploymentId -> {
             vertx.undeploy(deploymentId);
         });
@@ -73,5 +63,12 @@ public class MainVerticle extends AbstractVerticle {
         config.put("port", 27017);
         config.put("db_name", "vertx-feeds");
         return config;
+    }
+    
+    private JsonObject redisConfig() {
+    	JsonObject config = new JsonObject();
+    	config.put("host", "localhost");
+    	config.put("port", 6379);
+    	return config;
     }
 }
