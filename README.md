@@ -12,6 +12,9 @@ Two models :
 * User
 * Feed (for now there is only one type of Feed : RSSFeed, could evolve in the future)
 
+
+Workflow :
+
 * Users register using a simple login / password
 * Once they're registered, they can subscribe to feeds by prividing the feed's URL (and a color)
 * Subscriptions are stored in user infos (`user.subscriptions`) but also in a plain mongo collection listing feeds and the number of people who subscribed to this feed
