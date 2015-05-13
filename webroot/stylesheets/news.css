@@ -1,0 +1,20 @@
+.entry {
+	margin:20px 0;
+	padding: 5px;
+	border:1px solid #CFCFCF;
+	border-left:3px solid #CFCFCF;
+	background-color:white;
+}
+
+.entry-title {
+	margin-bottom:10px;
+}
+
+.entry-description {
+	font-style: italic;
+	padding-left:20px;
+}
+
+.entry-pubdate {
+	text-align: right;
+}

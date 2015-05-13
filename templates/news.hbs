@@ -1,8 +1,16 @@
+{{#partial "scripts" }}
+<script src="/assets/scripts/NewsFeedCtrl.js"></script>
+<link rel="stylesheet" href="/assets/stylesheets/news.css" />
+{{/partial}}
 {{#partial "content" }}
 	<h2>News feed</h2>
 	<p>Here are the news aggregated from the feeds you subscribed to.</p>
 	<div class="news-feed" ng-controller="NewsFeedCtrl">
-		
+		<div class="entry" ng-repeat="entry in entries">
+			<a href="{[{entry.link}]}" class="entry-title" ng-bind="entry.title"></a>
+			<div class="entry-description" ng-bind="entry.description"></div>
+			<div class="entry-pubdate" ng-bind="entry.published"></div>
+		</div>
 	</div>
 {{/partial}}
 {{> templates/layout.hbs}}

@@ -1,17 +1,23 @@
 <!DOCTYPE html>
-<html>
+<html ng-app="vertxFeeds">
     <head>
 		<link rel="stylesheet" type="text/css" href="/assets/stylesheets/libs/foundation.min.css">
 		<link rel="stylesheet" type="text/css" href="/assets/stylesheets/main.css">
+		<script type="text/javascript">
+			window.userToken = "{{accessToken}}";
+		</script>
+		<script type="text/javascript" src="/assets/scripts/libs/angular.min.js"></script>
+		<script type="text/javascript" src="/assets/scripts/angular-interpolator-shim.js"></script>
+		{{#block "scripts" }}
+		{{/block}}
     </head>
     <body>
 		<div id="main-menu">
 			<nav class="top-bar" data-topbar role="navigation">
 				<ul class="title-area">
 					<li class="name">
-						<h1><a href="#" class="active">Vertx Feeds</a></h1>
+						<h1><a href="/index.hbs" class="active">Vertx Feeds</a></h1>
 					</li>
-					<li class="toggle-topbar menu-icon"><a href="#"><span>Menu</span></a></li>
 				</ul>
 
 				<section class="top-bar-section">
@@ -24,7 +30,7 @@
 					</ul>
 					<ul class="left">
 						<li><a href="/news.hbs">My news feed</a></li>
-						<li><a href="/manage.hbs">Manage feeds</a></li>
+						<li><a href="/manage.hbs">Manage subscriptions</a></li>
 					</ul>
 				</section>
 			</nav>

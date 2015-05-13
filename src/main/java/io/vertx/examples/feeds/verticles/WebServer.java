@@ -107,12 +107,12 @@ public class WebServer extends AbstractVerticle {
         router.getWithRegex(".+\\.hbs").handler(templateHandler);
 
         /* API */
-        mapApiRoutes(router);
+        router.mountSubRouter("/api", apiRouter());
 
         return router;
     }
 
-    private void mapApiRoutes(Router router) {
+    private Router apiRouter() {
         /*
          * TODO : provide authentication through the AuthService / AuthProvider instead of a custom api handler
          * TODO : every page except login must be private
@@ -124,19 +124,28 @@ public class WebServer extends AbstractVerticle {
          * 
          * AuthProvider provider =
          */
-        router.route("/api/*").handler(BodyHandler.create());
+        Router router = Router.router(vertx);
+        router.route().consumes("application/json");
+        router.route().produces("application/json");
+        router.route().handler(context -> {
+            context.response().headers().add("Content-Type", "application/json");
+            context.next();
+        });
+        router.route("/*").handler(BodyHandler.create());
 
         /* login / user-related stuff */
-        router.post("/api/register").handler(authApi::register);
-        router.post("/api/login").handler(authApi::login);
-        router.post("/api/logout").handler(authApi::logout);
+        router.post("/register").handler(authApi::register);
+        router.post("/login").handler(authApi::login);
+        router.post("/logout").handler(authApi::logout);
 
         /* API to deal with feeds */
-        router.post("/api/feeds").handler(feedsApi::create);
-        router.get("/api/feeds").handler(feedsApi::list);
-        router.get("/api/feeds/:feedId").handler(feedsApi::retrieve);
-        router.put("/api/feeds/:feedId").handler(feedsApi::update);
-        router.get("/api/feeds/:feedId/entries").handler(feedsApi::entries);
-        router.delete("/api/feeds/:feedId").handler(feedsApi::delete);
+        router.post("/feeds").handler(feedsApi::create);
+        router.get("/feeds").handler(feedsApi::list);
+        router.get("/feeds/:feedId").handler(feedsApi::retrieve);
+        router.put("/feeds/:feedId").handler(feedsApi::update);
+        router.get("/feeds/:feedId/entries").handler(feedsApi::entries);
+        router.delete("/feeds/:feedId").handler(feedsApi::delete);
+
+        return router;
     }
 }

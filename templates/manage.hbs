@@ -1,9 +1,30 @@
+{{#partial "scripts" }}
+	<script type="text/javascript" src="/assets/scripts/ManageFeedsCtrl.js"></script>
+{{/partial}}
 {{#partial "content" }}
-	<h2>News feed</h2>
-	<p>Here are the feeds you subscribed to.</p>
-	<div class="news-feed" ng-controller="NewsFeedCtrl">
-		
+	<h2>Manage your subscriptions</h2>
+	<div ng-controller="ManageFeedsCtrl">
+		<p>Here are the {{subscriptions.length}} <span ng-bind="subscriptions.length"></span> feeds you subscribed to.</p>
+		<table class="feed-list">
+			<tr ng-repeat="subscription in subscriptions">
+				<td ng-bind="subscription.url"></td>
+				<td ng-bind="subscription.color"></td>
+				<td><button class="button small alert" ng-click="unsubscribe(subscription)">Unsubscribe</button></td>
+			</tr>
+		</table>
+		<button ng-if="!pendingSubscription" class="button small" ng-click="addSubscription()">Add a new feed</button>
+		<table ng-if="pendingSubscription" style="width:500px;">
+			<tr>
+				<td>URL : </td><td><input type="text" ng-model="pendingSubscription.url" /></td>
+			</tr>
+			<tr>
+				<td>Color : </td><td><input type="text" ng-model="pendingSubscription.color" /></td>
+			</tr>
+			<tr>
+				<td><button class="button small secondary" ng-click="cancelPending()">Cancel</button></td>
+				<td style="text-align:right"><button class="button small" ng-click="savePending()">Save</button></td>
+			</tr>
+		</div>
 	</div>
-	<button class="button small" ng-click="">Add a new feed</button>
 {{/partial}}
 {{> templates/layout.hbs}}

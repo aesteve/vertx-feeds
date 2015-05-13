@@ -4,6 +4,8 @@ import io.vertx.core.http.HttpServerRequest;
 import io.vertx.core.http.HttpServerResponse;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
+import io.vertx.core.logging.Logger;
+import io.vertx.core.logging.impl.LoggerFactory;
 import io.vertx.examples.feeds.utils.StringUtils;
 import io.vertx.examples.feeds.utils.UserUtils;
 import io.vertx.ext.apex.RoutingContext;
@@ -17,6 +19,8 @@ import java.util.Optional;
  * Simple CRUD for handling feeds
  */
 public class FeedsApi {
+
+    private final static Logger log = LoggerFactory.getLogger(FeedsApi.class);
 
     private MongoClient mongo;
     private RedisClient redis;
@@ -127,25 +131,25 @@ public class FeedsApi {
                         if (duplicateHandler.succeeded()) {
                             List<JsonObject> duplicates = duplicateHandler.result();
                             if (duplicates.isEmpty()) {
-                                // should never happen
-                                    context.response().end(subscription.toString());
-                                } else {
-                                    JsonObject duplicate = duplicates.get(0);
-                                    JsonObject updateQuery = new JsonObject();
-                                    Integer oldCount = duplicate.getInteger("subscriber_count");
-                                    if (oldCount == null) {
-                                        oldCount = 1;
-                                    }
-                                    subscription.put("subscriber_count", oldCount - 1);
-                                    updateQuery.put("_id", duplicate.getString("_id"));
-                                    mongo.update("feeds", updateQuery, subscription, feedUpdateHandler -> {
-                                        HttpServerResponse response = context.response();
-                                        subscription.remove("subscriber_count"); // do not expose this
-                                                    response.end(subscription.toString());
-                                                });
+                                /* should never happen */
+                                context.response().end(subscription.toString());
+                            } else {
+                                JsonObject duplicate = duplicates.get(0);
+                                JsonObject updateQuery = new JsonObject();
+                                Integer oldCount = duplicate.getInteger("subscriber_count");
+                                if (oldCount == null) {
+                                    oldCount = 1;
                                 }
+                                subscription.put("subscriber_count", oldCount - 1);
+                                updateQuery.put("_id", duplicate.getString("_id"));
+                                mongo.update("feeds", updateQuery, subscription, feedUpdateHandler -> {
+                                    HttpServerResponse response = context.response();
+                                    subscription.remove("subscriber_count"); /* do not expose this */
+                                    response.end(subscription.toString());
+                                });
                             }
-                        });
+                        }
+                    });
                 });
             }
         });
@@ -158,7 +162,6 @@ public class FeedsApi {
                 subscriptions = new JsonArray();
             }
             HttpServerResponse response = context.response();
-            response.headers().add("Content-Type", "application/json");
             response.end(subscriptions.toString());
         });
     }
@@ -172,7 +175,13 @@ public class FeedsApi {
                     if (handler.failed()) {
                         context.fail(handler.cause());
                     } else {
-                        context.response().end(handler.result().toString());
+                        JsonArray orig = new JsonArray(handler.result().toString());
+                        JsonArray result = new JsonArray();
+                        orig.forEach(val -> {
+                            log.info("found val : " + val);
+                            result.add(new JsonObject(val.toString()));
+                        });
+                        context.response().end(result.toString());
                     }
                 });
             }

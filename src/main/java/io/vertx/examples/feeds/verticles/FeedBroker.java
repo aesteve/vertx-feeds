@@ -27,7 +27,7 @@ import com.rometools.rome.io.SyndFeedInput;
 
 public class FeedBroker extends AbstractVerticle {
 
-    private final static Long POLL_PERIOD = 60000l;
+    private final static Long POLL_PERIOD = 3600000l;
     private final static Logger log = LoggerFactory.getLogger(FeedBroker.class);
     private MongoClient mongo;
     private RedisClient redis;
@@ -131,6 +131,7 @@ public class FeedBroker extends AbstractVerticle {
                     List<JsonObject> jsonEntries = FeedUtils.toJson(feed.getEntries());
                     insertEntriesIntoRedis(feedId, jsonEntries, future);
                 } catch (FeedException fe) {
+                    log.error("Exception while reading feed : " + url.toString(), fe);
                     future.fail(fe);
                     return;
                 }
@@ -142,6 +143,7 @@ public class FeedBroker extends AbstractVerticle {
         // TODO : check if entry exists ? like check hash ?
         Map<String, Double> members = new HashMap<String, Double>(jsonEntries.size());
         jsonEntries.forEach(entry -> {
+            log.info("Will insert into redis : " + entry.toString());
             members.put(entry.toString(), entry.getDouble("score"));
         });
         redis.zaddMany(feedId, members, handler -> {
