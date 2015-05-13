@@ -6,29 +6,28 @@ Every user can subscribe to some feeds (RSS, Twitter feed, ...).
 
 Users and subscriptions by user are store in MongoDB.
 
-## First approach (without Redis) :
+## How it works :
 
-* when a user connects, for each of it's subscriptions, a request is made and data is aggregated and pushed into `/api/myfeed`. Once the API response is received, the user opens a websocket for live updates
-* as long as he's connected, a worker verticle polls periodically for each of his subscriptions. If a new item is detected, it's pushed to a websocket
+Two models : 
+* User
+* Feed (for now there is only one type of Feed : RSSFeed, could evolve in the future)
 
-Showcase for : 
-* MongoDB
-* Apex authentication
-* `createClient.getNow()`
-* `setPeriodic`
-* REST API
-* SockJS
-* front-end stuff (AngularJS ?)
+* Users register using a simple login / password
+* Once they're registered, they can subscribe to feeds by prividing the feed's URL (and a color)
+* Subscriptions are stored in user infos (`user.subscriptions`) but also in a plain mongo collection listing feeds and the number of people who subscribed to this feed
+* Periodically, a verticle lists the entries in the feeds collection and for each of the feeds that have a subscriber count > 0, will read the RSS feed and fetch new entries
+* New feed entries are store into JSON objects in a Redis set. The key is the feed's URL hash, the value is the JSON equivalent of the RSS entry and the score is the timestamp of the entry's publication date
+* When a user asks for his news feed entries are aggregated from Redis for each of his subscriptions
 
-## Second approach (using Redis) :
-* For every users subscriptions, the worker verticle polls periodically and fulfill a Redis database with the updates fetched
-* The API simply asks Redis with the right keys
-* When a socket is connected, Redis is polled periodically to retrieve live updates
 
-Showcase for : 
-* Worker verticles
-* Redis
-* Intensive polling
+## Feed API :
+
+* `GET /api/feeds` : lists user's subscriptions
+* `POST /api/feeds` : subscribe to a new feed
+* `GET /api/feeds/:feedId` : fetches information for a specific feed
+* `PUT /api/feeds/:feedId` : update infos for a specific feed (color especially)
+* `DELETE /api/feeds/:feedId` : unsubscribe to a feed
+* `GET /api/feeds/:feedId/entries` : fetches the feed entries
 
 ## Schema : 
 
@@ -50,9 +49,9 @@ list subscriptions |                   | populate items in Redis
  |                            | |                           |                                   
  |                            | |                           |                                   
  | Stores :                   | | Stores :                  |                                   
- | - Users                    | | - Items per subscription  |                                   
+ | - Users                    | | - Items per feed  |                                   
  | - Their subscriptions      | |                           |                                   
- |                            | |                           |                                   
+ | - A collection of feeds    | |                           |                                   
  |                            | |                           |                                   
  +-----------------^----------+ +----^----------------------+                                   
  login / create user / subscribe     | poll periodically for each connected user -> push updates
