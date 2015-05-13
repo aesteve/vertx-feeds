@@ -52,7 +52,7 @@ list subscriptions |                   | populate items in Redis
  |                            | |                           |                                   
  |                            | |                           |                                   
  | Stores :                   | | Stores :                  |                                   
- | - Users                    | | - Items per feed  |                                   
+ | - Users                    | | - Items per feed          |                                   
  | - Their subscriptions      | |                           |                                   
  | - A collection of feeds    | |                           |                                   
  |                            | |                           |                                   
