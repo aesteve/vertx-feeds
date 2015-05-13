@@ -1,4 +1,4 @@
-package io.vertx.feeds.verticles;
+package io.vertx.examples.feeds.verticles;
 
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Context;
@@ -25,7 +25,7 @@ public class MainVerticle extends AbstractVerticle {
 
     @Override
     public void start(Future<Void> future) {
-        JsonObject dbConfig = new JsonObject(); 
+        JsonObject dbConfig = new JsonObject();
         dbConfig.put("redis", redisConfig());
         dbConfig.put("mongo", mongoConfig());
         DeploymentOptions brokerOptions = new DeploymentOptions();
@@ -64,11 +64,11 @@ public class MainVerticle extends AbstractVerticle {
         config.put("db_name", "vertx-feeds");
         return config;
     }
-    
+
     private JsonObject redisConfig() {
-    	JsonObject config = new JsonObject();
-    	config.put("host", "localhost");
-    	config.put("port", 6379);
-    	return config;
+        JsonObject config = new JsonObject();
+        config.put("host", "localhost");
+        config.put("port", 6379);
+        return config;
     }
 }

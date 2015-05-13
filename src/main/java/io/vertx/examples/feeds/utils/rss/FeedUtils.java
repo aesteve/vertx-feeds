@@ -1,4 +1,4 @@
-package io.vertx.feeds.utils.rss;
+package io.vertx.examples.feeds.utils.rss;
 
 import io.vertx.core.json.JsonObject;
 
@@ -29,13 +29,13 @@ public class FeedUtils {
         return json;
 
     }
-    
+
     public static List<JsonObject> toJson(List<SyndEntry> entries) {
-    	List<JsonObject> result = new ArrayList<JsonObject>(entries.size());
-    	entries.forEach(entry -> {
-    		result.add(toJson(entry));
-    	});
-    	return result;
+        List<JsonObject> result = new ArrayList<JsonObject>(entries.size());
+        entries.forEach(entry -> {
+            result.add(toJson(entry));
+        });
+        return result;
     }
 
     public static JsonObject toJson(SyndEntry entry) {
@@ -43,8 +43,8 @@ public class FeedUtils {
         json.put("title", entry.getTitle());
         Date published = entry.getPublishedDate();
         if (published == null) {
-        	// TODO : log warning ? use another date ? 
-        	published = new Date(); // FIXME : absolutely wrong...
+            // TODO : log warning ? use another date ?
+            published = new Date(); // FIXME : absolutely wrong...
         }
         json.put("published", toJson(published));
         json.put("score", Long.valueOf(published.getTime()).doubleValue());

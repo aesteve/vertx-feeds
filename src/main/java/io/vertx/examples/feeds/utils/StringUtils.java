@@ -1,4 +1,4 @@
-package io.vertx.feeds.utils;
+package io.vertx.examples.feeds.utils;
 
 import java.io.UnsupportedEncodingException;
 import java.math.BigInteger;

@@ -1,4 +1,4 @@
-package io.vertx.feeds.verticles;
+package io.vertx.examples.feeds.verticles;
 
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Context;
@@ -7,6 +7,8 @@ import io.vertx.core.Vertx;
 import io.vertx.core.http.HttpServer;
 import io.vertx.core.http.HttpServerOptions;
 import io.vertx.core.json.JsonObject;
+import io.vertx.examples.feeds.api.AuthenticationApi;
+import io.vertx.examples.feeds.api.FeedsApi;
 import io.vertx.ext.apex.Router;
 import io.vertx.ext.apex.Session;
 import io.vertx.ext.apex.handler.BodyHandler;
@@ -19,8 +21,6 @@ import io.vertx.ext.apex.sstore.LocalSessionStore;
 import io.vertx.ext.apex.sstore.SessionStore;
 import io.vertx.ext.apex.templ.HandlebarsTemplateEngine;
 import io.vertx.ext.mongo.MongoClient;
-import io.vertx.feeds.api.AuthenticationApi;
-import io.vertx.feeds.api.FeedsApi;
 import io.vertx.redis.RedisClient;
 
 public class WebServer extends AbstractVerticle {
@@ -35,17 +35,17 @@ public class WebServer extends AbstractVerticle {
 
     @Override
     public void init(Vertx vertx, Context context) {
-    	super.init(vertx, context);
-    	config = context.config();
+        super.init(vertx, context);
+        config = context.config();
     }
-    
+
     @Override
     public void start(Future<Void> future) {
-    	mongo = MongoClient.createShared(vertx, config.getJsonObject("mongo"));
-    	redis = RedisClient.create(vertx, config.getJsonObject("redis"));
-    	authApi = new AuthenticationApi(mongo);
-    	feedsApi = new FeedsApi(mongo, redis);
-    	redis.start(handler -> {
+        mongo = MongoClient.createShared(vertx, config.getJsonObject("mongo"));
+        redis = RedisClient.create(vertx, config.getJsonObject("redis"));
+        authApi = new AuthenticationApi(mongo);
+        feedsApi = new FeedsApi(mongo, redis);
+        redis.start(handler -> {
             server = vertx.createHttpServer(createOptions());
             server.requestHandler(createRouter()::accept);
             server.listen(result -> {
@@ -55,7 +55,7 @@ public class WebServer extends AbstractVerticle {
                     future.fail(result.cause());
                 }
             });
-    	});
+        });
     }
 
     @Override
@@ -134,7 +134,7 @@ public class WebServer extends AbstractVerticle {
         /* API to deal with feeds */
         router.post("/api/feeds").handler(feedsApi::create);
         router.get("/api/feeds").handler(feedsApi::list);
-        router.get("/api/feeds/:feedId").handler(feedsApi::retrieve);        
+        router.get("/api/feeds/:feedId").handler(feedsApi::retrieve);
         router.put("/api/feeds/:feedId").handler(feedsApi::update);
         router.get("/api/feeds/:feedId/entries").handler(feedsApi::entries);
         router.delete("/api/feeds/:feedId").handler(feedsApi::delete);

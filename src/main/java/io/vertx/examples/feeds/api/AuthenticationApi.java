@@ -1,14 +1,14 @@
-package io.vertx.feeds.api;
+package io.vertx.examples.feeds.api;
 
 import io.vertx.core.http.HttpServerResponse;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.logging.Logger;
 import io.vertx.core.logging.impl.LoggerFactory;
+import io.vertx.examples.feeds.utils.StringUtils;
 import io.vertx.ext.apex.RoutingContext;
 import io.vertx.ext.apex.Session;
 import io.vertx.ext.mongo.MongoClient;
-import io.vertx.feeds.utils.StringUtils;
 
 import java.util.List;
 
@@ -20,7 +20,7 @@ public class AuthenticationApi {
     private StringUtils strUtils;
 
     public AuthenticationApi(MongoClient mongo) {
-    	this.mongo = mongo;
+        this.mongo = mongo;
         this.strUtils = new StringUtils();
     }
 

@@ -1,4 +1,4 @@
-package io.vertx.feeds.utils;
+package io.vertx.examples.feeds.utils;
 
 import io.vertx.core.Handler;
 import io.vertx.core.json.JsonObject;
