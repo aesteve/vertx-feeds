@@ -1,6 +1,8 @@
 package io.vertx.examples.feeds.utils.rss;
 
 import io.vertx.core.json.JsonObject;
+import io.vertx.core.logging.Logger;
+import io.vertx.core.logging.impl.LoggerFactory;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -13,6 +15,8 @@ import com.rometools.rome.feed.synd.SyndFeed;
 import com.rometools.rome.feed.synd.SyndImage;
 
 public class FeedUtils {
+
+    private final static Logger log = LoggerFactory.getLogger(FeedUtils.class);
 
     public static SimpleDateFormat isoDateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSX");
 
@@ -44,6 +48,7 @@ public class FeedUtils {
         Date published = entry.getPublishedDate();
         if (published == null) {
             // TODO : log warning ? use another date ?
+            log.warn("!!!!!! The RSS has no published date : this will lead to duplicates entry");
             published = new Date(); // FIXME : absolutely wrong...
         }
         json.put("published", toJson(published));

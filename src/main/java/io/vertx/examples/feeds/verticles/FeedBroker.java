@@ -9,6 +9,7 @@ import io.vertx.core.http.HttpClientOptions;
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.logging.Logger;
 import io.vertx.core.logging.impl.LoggerFactory;
+import io.vertx.examples.feeds.dao.RedisDAO;
 import io.vertx.examples.feeds.utils.async.MultipleFutures;
 import io.vertx.examples.feeds.utils.rss.FeedUtils;
 import io.vertx.ext.mongo.MongoClient;
@@ -20,6 +21,7 @@ import java.net.URL;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import com.rometools.rome.feed.synd.SyndFeed;
 import com.rometools.rome.io.FeedException;
@@ -27,10 +29,11 @@ import com.rometools.rome.io.SyndFeedInput;
 
 public class FeedBroker extends AbstractVerticle {
 
-    private final static Long POLL_PERIOD = 3600000l;
+    // private final static Long POLL_PERIOD = 3600000l;
+    private final static Long POLL_PERIOD = 10000l;
     private final static Logger log = LoggerFactory.getLogger(FeedBroker.class);
     private MongoClient mongo;
-    private RedisClient redis;
+    private RedisDAO redis;
     private JsonObject config;
 
     private Long timerId;
@@ -44,7 +47,7 @@ public class FeedBroker extends AbstractVerticle {
     @Override
     public void start(Future<Void> future) {
         mongo = MongoClient.createShared(vertx, config.getJsonObject("mongo"));
-        redis = RedisClient.create(vertx, config.getJsonObject("redis"));
+        redis = new RedisDAO(RedisClient.create(vertx, config.getJsonObject("redis")));
         redis.start(handler -> {
             if (handler.succeeded()) {
                 readFeeds();
@@ -77,7 +80,10 @@ public class FeedBroker extends AbstractVerticle {
                     result.cause().printStackTrace(); // TODO : log instead
                     }
                 } else {
-                    List<JsonObject> feeds = result.result();
+                    List<JsonObject> allFeeds = result.result();
+                    List<JsonObject> feeds = allFeeds.stream().filter(feed -> {
+                        return feed.getInteger("subscriber_count") > 0;
+                    }).collect(Collectors.toList());
                     MultipleFutures<Void> fetchFeedsFuture = new MultipleFutures<Void>();
                     Map<JsonObject, Future<Void>> futuresByFeed = new HashMap<JsonObject, Future<Void>>(feeds.size());
                     feeds.forEach(feed -> {
@@ -129,7 +135,15 @@ public class FeedBroker extends AbstractVerticle {
                     JsonObject feedJson = FeedUtils.toJson(feed);
                     log.info(feedJson);
                     List<JsonObject> jsonEntries = FeedUtils.toJson(feed.getEntries());
-                    insertEntriesIntoRedis(feedId, jsonEntries, future);
+                    log.info("Insert entries into Redis : " + jsonEntries);
+                    redis.insertEntries(feedId, jsonEntries, handler -> {
+                        if (handler.failed()) {
+                            log.error("Insert failed", handler.cause());
+                            future.fail(handler.cause());
+                        } else {
+                            future.complete();
+                        }
+                    });
                 } catch (FeedException fe) {
                     log.error("Exception while reading feed : " + url.toString(), fe);
                     future.fail(fe);
@@ -137,22 +151,6 @@ public class FeedBroker extends AbstractVerticle {
                 }
             });
         }).putHeader("Accept", "application/xml").end();
-    }
-
-    private void insertEntriesIntoRedis(String feedId, List<JsonObject> jsonEntries, Future<Void> future) {
-        // TODO : check if entry exists ? like check hash ?
-        Map<String, Double> members = new HashMap<String, Double>(jsonEntries.size());
-        jsonEntries.forEach(entry -> {
-            log.info("Will insert into redis : " + entry.toString());
-            members.put(entry.toString(), entry.getDouble("score"));
-        });
-        redis.zaddMany(feedId, members, handler -> {
-            if (handler.failed()) {
-                future.fail(handler.cause());
-            } else {
-                future.complete();
-            }
-        });
     }
 
     private HttpClient createClient(URL url) {

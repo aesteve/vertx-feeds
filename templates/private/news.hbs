@@ -6,7 +6,7 @@
 	<h2>News feed</h2>
 	<p>Here are the news aggregated from the feeds you subscribed to.</p>
 	<div class="news-feed" ng-controller="NewsFeedCtrl">
-		<div class="entry" ng-repeat="entry in entries">
+		<div class="entry" ng-repeat="entry in entries" style="{[{feedEntryStyle(entry)}]}">
 			<a href="{[{entry.link}]}" class="entry-title" ng-bind="entry.title"></a>
 			<div class="entry-description" ng-bind="entry.description"></div>
 			<div class="entry-pubdate" ng-bind="entry.published"></div>

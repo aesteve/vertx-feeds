@@ -7,8 +7,11 @@ import io.vertx.core.Vertx;
 import io.vertx.core.http.HttpServer;
 import io.vertx.core.http.HttpServerOptions;
 import io.vertx.core.json.JsonObject;
-import io.vertx.examples.feeds.api.AuthenticationApi;
-import io.vertx.examples.feeds.api.FeedsApi;
+import io.vertx.examples.feeds.dao.MongoDAO;
+import io.vertx.examples.feeds.dao.RedisDAO;
+import io.vertx.examples.feeds.handlers.UserContextHandler;
+import io.vertx.examples.feeds.handlers.api.AuthenticationApi;
+import io.vertx.examples.feeds.handlers.api.FeedsApi;
 import io.vertx.ext.apex.Router;
 import io.vertx.ext.apex.Session;
 import io.vertx.ext.apex.handler.BodyHandler;
@@ -29,8 +32,9 @@ public class WebServer extends AbstractVerticle {
 
     private AuthenticationApi authApi;
     private FeedsApi feedsApi;
-    private MongoClient mongo;
-    private RedisClient redis;
+    private UserContextHandler userContextHandler;
+    private MongoDAO mongo;
+    private RedisDAO redis;
     private JsonObject config;
 
     @Override
@@ -41,8 +45,8 @@ public class WebServer extends AbstractVerticle {
 
     @Override
     public void start(Future<Void> future) {
-        mongo = MongoClient.createShared(vertx, config.getJsonObject("mongo"));
-        redis = RedisClient.create(vertx, config.getJsonObject("redis"));
+        mongo = new MongoDAO(MongoClient.createShared(vertx, config.getJsonObject("mongo")));
+        redis = new RedisDAO(RedisClient.create(vertx, config.getJsonObject("redis")));
         authApi = new AuthenticationApi(mongo);
         feedsApi = new FeedsApi(mongo, redis);
         redis.start(handler -> {
@@ -85,19 +89,36 @@ public class WebServer extends AbstractVerticle {
         router.route().failureHandler(ErrorHandler.create(true)); /* display exception details */
 
         /* Static resources */
-        StaticHandler staticHandler = StaticHandler.create();
-        staticHandler.setCachingEnabled(false);
-        router.route("/assets/*").handler(staticHandler);
+        staticHandler(router);
 
+        /* Session / cookies for users */
         router.route().handler(CookieHandler.create());
         SessionStore sessionStore = LocalSessionStore.create(vertx);
         SessionHandler sessionHandler = SessionHandler.create(sessionStore);
         router.route().handler(sessionHandler);
+        userContextHandler = new UserContextHandler(mongo);
 
-        /* Templates */
+        /* Dynamic pages */
+        dynamicPages(router);
+
+        /* API */
+        router.mountSubRouter("/api", apiRouter(userContextHandler));
+
+        return router;
+    }
+
+    private Router staticHandler(Router router) {
+        StaticHandler staticHandler = StaticHandler.create();
+        staticHandler.setCachingEnabled(false);
+        router.route("/assets/*").handler(staticHandler);
+        return router;
+    }
+
+    private Router dynamicPages(Router router) {
         HandlebarsTemplateEngine hbsEngine = HandlebarsTemplateEngine.create();
         hbsEngine.setMaxCacheSize(0); // no cache since we wan't hot-reload for templates
         TemplateHandler templateHandler = TemplateHandler.create(hbsEngine);
+        router.get("/private/*").handler(userContextHandler::fromSession);
         router.getWithRegex(".+\\.hbs").handler(context -> {
             final Session session = context.session();
             context.data().put("userLogin", session.get("login")); /* in order to greet him */
@@ -105,14 +126,10 @@ public class WebServer extends AbstractVerticle {
             context.next();
         });
         router.getWithRegex(".+\\.hbs").handler(templateHandler);
-
-        /* API */
-        router.mountSubRouter("/api", apiRouter());
-
         return router;
     }
 
-    private Router apiRouter() {
+    private Router apiRouter(UserContextHandler userContextHandler) {
         /*
          * TODO : provide authentication through the AuthService / AuthProvider instead of a custom api handler
          * TODO : every page except login must be private
@@ -127,18 +144,19 @@ public class WebServer extends AbstractVerticle {
         Router router = Router.router(vertx);
         router.route().consumes("application/json");
         router.route().produces("application/json");
+        router.route().handler(BodyHandler.create());
         router.route().handler(context -> {
             context.response().headers().add("Content-Type", "application/json");
             context.next();
         });
-        router.route("/*").handler(BodyHandler.create());
 
-        /* login / user-related stuff */
+        /* login / user-related stuff : no token needed */
         router.post("/register").handler(authApi::register);
         router.post("/login").handler(authApi::login);
         router.post("/logout").handler(authApi::logout);
 
-        /* API to deal with feeds */
+        /* API to deal with feeds : token required */
+        router.route("/feeds*").handler(userContextHandler::fromApiToken);
         router.post("/feeds").handler(feedsApi::create);
         router.get("/feeds").handler(feedsApi::list);
         router.get("/feeds/:feedId").handler(feedsApi::retrieve);

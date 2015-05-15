@@ -23,14 +23,14 @@
 				<section class="top-bar-section">
 					<ul class="right">
 						{{#if userLogin}}
-						<li><a href="#">Hello, {{userLogin}}</a></li>
+						<li><a href="javascript:void(0)">Hello, {{userLogin}}</a></li>
 						{{else}}
 						<li><a href="/login.hbs">Log in</a></li>
 						{{/if}}
 					</ul>
 					<ul class="left">
-						<li><a href="/news.hbs">My news feed</a></li>
-						<li><a href="/manage.hbs">Manage subscriptions</a></li>
+						<li><a href="/private/news.hbs">My news feed</a></li>
+						<li><a href="/private/manage.hbs">Manage subscriptions</a></li>
 					</ul>
 				</section>
 			</nav>

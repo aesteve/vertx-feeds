@@ -3,8 +3,12 @@
 {{#partial "content" }}
 	<h2>Welcome to Vertx-Feeds !</h2>
 	<p>Vertx-Feeds is a very simple feed aggregator created to demonstrate how to build a complete application with Vert.x 3, Apex, MongoDB and Redis.</p>
-<p>If you're interested (and you must be) by the source code, please have a look <a href="https://github.com/aesteve/vertx-feeds">at the GitHub repository</a></p>
-	<p>If you just want to play with the project to understand how it works, feel free to <a href="/register.hbs">register</a> (if you haven't yet) with whatever login/password you want and <a href="/manage.hbs">subscribe to RSS feeds</a>. You'll then be able to access your <a href="/news.hbs">news feed</a>. Remember it's a showcase project. <strong>Do not</strong> use it as an RSS Reader (or clone the project and create your own instance if you really want to !).</p>
+	<p>If you're interested (and you must be) by the source code, please have a look <a href="https://github.com/aesteve/vertx-feeds">at the GitHub repository</a></p>
+	{{#if userLogin}}
+	<p>Hello {{userLogin}}. You can <a href="/private/manage.hbs">subscribe to RSS feeds</a>. You'll then be able to access your <a href="/private/news.hbs">news feed</a>. Remember it's a showcase project. <strong>Do not</strong> use it as an RSS Reader (or clone the project and create your own instance if you really want to !).</p>
+	{{else}}
+	<p>If you just want to play with the project to understand how it works, feel free to <a href="/register.hbs">register</a> with whatever login/password you want.</p>
+	{{/if}}
 	<p>The project is written in Java 8, but work is in progress to translate it into other languages supported by Vert.x</p>
 	<p>Feel free to <a href="https://github.com/aesteve/vertx-feeds/issues/new">open an issue</a> if you find a bug, or ask a question on <a href="">Vert.x's Google Group</a></p>
 	<p>List of technology used :</p>
@@ -13,8 +17,5 @@
 		<li>MongoDB - vertx-mongo-client</li>
 		<li>Redis - vertx-redis-client</li>
 	</ul>
-	{{#if accessToken}}
-		<p>You're logged in, and your access token is : {{accessToken}}</p>
-	{{/if}}
 {{/partial}}
 {{> templates/layout.hbs}}
