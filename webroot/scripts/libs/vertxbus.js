@@ -1,4 +1,20 @@
 /*
+ * Copyright 2014 Red Hat, Inc.
+ *
+ *  All rights reserved. This program and the accompanying materials
+ *  are made available under the terms of the Eclipse Public License v1.0
+ *  and Apache License v2.0 which accompanies this distribution.
+ *
+ *  The Eclipse Public License is available at
+ *  http://www.eclipse.org/legal/epl-v10.html
+ *
+ *  The Apache License v2.0 is available at
+ *  http://www.opensource.org/licenses/apache2.0.php
+ *
+ *  You may elect to redistribute this code under either of these licenses.
+ */
+
+/*
  *   Copyright (c) 2011-2013 The original author or authors
  *   ------------------------------------------------------
  *   All rights reserved. This program and the accompanying materials
@@ -35,7 +51,6 @@ var vertx = vertx || {};
     var handlerMap = {};
     var replyHandlers = {};
     var state = vertx.EventBus.CONNECTING;
-    var sessionID = null;
     var pingTimerID = null;
     var pingInterval = null;
     if (options) {
@@ -48,18 +63,6 @@ var vertx = vertx || {};
     that.onopen = null;
     that.onclose = null;
 
-    that.login = function(username, password, replyHandler) {
-      sendOrPub("send", 'vertx.basicauthmanager.login', {username: username, password: password}, function(reply) {
-        if (reply.status === 'ok') {
-          that.sessionID = reply.sessionID;
-        }
-        if (replyHandler) {
-          delete reply.sessionID;
-          replyHandler(reply)
-        }
-      });
-    }
-  
     that.send = function(address, message, replyHandler) {
       sendOrPub("send", address, message, replyHandler)
     }
@@ -106,7 +109,6 @@ var vertx = vertx || {};
   
     that.close = function() {
       checkOpen();
-      if (pingTimerID) clearInterval(pingTimerID);
       state = vertx.EventBus.CLOSING;
       sockJSConn.close();
     }
@@ -116,9 +118,9 @@ var vertx = vertx || {};
     }
   
     sockJSConn.onopen = function() {
-      // Send the first ping then send a ping every 5 seconds
+      // Send the first ping then send a ping every pingInterval milliseconds
       sendPing();
-      pingTimerID = setInterval(sendPing, 5000);
+      pingTimerID = setInterval(sendPing, pingInterval);
       state = vertx.EventBus.OPEN;
       if (that.onopen) {
         that.onopen();
@@ -127,6 +129,7 @@ var vertx = vertx || {};
   
     sockJSConn.onclose = function() {
       state = vertx.EventBus.CLOSED;
+      if (pingTimerID) clearInterval(pingTimerID);
       if (that.onclose) {
         that.onclose();
       }
@@ -135,6 +138,11 @@ var vertx = vertx || {};
     sockJSConn.onmessage = function(e) {
       var msg = e.data;
       var json = JSON.parse(msg);
+      var type = json.type;
+      if (type === 'err') {
+        console.error("Error received on connection: " + json.body);
+        return;
+      }
       var body = json.body;
       var replyAddress = json.replyAddress;
       var address = json.address;
@@ -177,9 +185,6 @@ var vertx = vertx || {};
       var envelope = { type : sendOrPub,
                        address: address,
                        body: message };
-      if (that.sessionID) {
-        envelope.sessionID = that.sessionID;
-      }
       if (replyHandler) {
         var replyAddress = makeUUID();
         envelope.replyAddress = replyAddress;
