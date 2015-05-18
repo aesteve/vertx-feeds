@@ -4,7 +4,9 @@ vertxFeeds.controller('NewsFeedCtrl', ['$scope', '$http', function($scope, $http
 			entries[i].feed = subscription;
 		}
 		$scope.entries = entries.concat($scope.entries);
-		$scope.$apply();
+		try {
+			$scope.$apply();
+		} catch(all) {}
 	};
 	var connectToEventBus = function () {
 		var eb = new vertx.EventBus("http://localhost:9000/eventbus");
@@ -20,11 +22,7 @@ vertxFeeds.controller('NewsFeedCtrl', ['$scope', '$http', function($scope, $http
 	};
 	var getFeedEntries = function(feed, callback) {
 		$http.get("/api/feeds/"+feed.hash+"/entries?accessToken="+userToken).success(function(data){
-			for (var i=0;i<data.length;i++) {
-				data[i].feed = feed;
-			}
-			console.log("nb entries : "+data.length);
-			$scope.entries = $scope.entries.concat(data);
+			addFeedEntries(data, feed);
 			if (callback) {
 				callback();
 			}
