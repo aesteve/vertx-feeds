@@ -4,6 +4,7 @@ import io.vertx.core.json.JsonObject;
 import io.vertx.core.logging.Logger;
 import io.vertx.core.logging.impl.LoggerFactory;
 
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
@@ -34,10 +35,14 @@ public class FeedUtils {
 
     }
 
-    public static List<JsonObject> toJson(List<SyndEntry> entries) {
+    public static List<JsonObject> toJson(List<SyndEntry> entries, Date maxDate) {
         List<JsonObject> result = new ArrayList<JsonObject>(entries.size());
         entries.forEach(entry -> {
-            result.add(toJson(entry));
+        	Date published = entry.getPublishedDate();
+        	if (maxDate == null || published.compareTo(maxDate) > 0) {
+        		System.out.println("maxDate = "+maxDate);
+                result.add(toJson(entry));
+        	}
         });
         return result;
     }
@@ -59,6 +64,10 @@ public class FeedUtils {
             json.put("description", description.getValue());
         }
         return json;
+    }
+    
+    public static Date getDate(String isoDate) throws ParseException {
+    	return isoDateFormat.parse(isoDate);
     }
 
     public static String toJson(Date date) {

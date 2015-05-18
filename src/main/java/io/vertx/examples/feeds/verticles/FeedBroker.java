@@ -118,42 +118,48 @@ public class FeedBroker extends AbstractVerticle {
             }
             return;
         }
-        HttpClient client = createClient(url);
-        client.get(url.getPath(), response -> {
-            final int status = response.statusCode();
-            if (status < 200 || status >= 300) {
-                if (future != null) {
-                    future.fail(new RuntimeException("Could not read feed " + feedUrl + ". Response status code : " + status));
-                }
-                return;
-            }
-            response.bodyHandler(buffer -> {
-                String xmlFeed = buffer.toString("UTF-8");
-                StringReader xmlReader = new StringReader(xmlFeed);
-                SyndFeedInput feedInput = new SyndFeedInput();
-                try {
-                    SyndFeed feed = feedInput.build(xmlReader);
-                    JsonObject feedJson = FeedUtils.toJson(feed);
-                    log.info(feedJson);
-                    List<JsonObject> jsonEntries = FeedUtils.toJson(feed.getEntries());
-                    log.info("Insert entries into Redis : " + jsonEntries);
-                    /* FIXME : store max(lastUpdate) somewhere (Mongo) and push only updates > max(lastUpdate) (in both Redis and the websocket) */
-                    vertx.eventBus().publish(feedId, new JsonArray(jsonEntries));
-                    redis.insertEntries(feedId, jsonEntries, handler -> {
-                        if (handler.failed()) {
-                            log.error("Insert failed", handler.cause());
-                            future.fail(handler.cause());
-                        } else {
-                            future.complete();
-                        }
-                    });
-                } catch (FeedException fe) {
-                    log.error("Exception while reading feed : " + url.toString(), fe);
-                    future.fail(fe);
+        
+        redis.getMaxDate(feedId, maxDate -> {
+            HttpClient client = createClient(url);
+            client.get(url.getPath(), response -> {
+                final int status = response.statusCode();
+                if (status < 200 || status >= 300) {
+                    if (future != null) {
+                        future.fail(new RuntimeException("Could not read feed " + feedUrl + ". Response status code : " + status));
+                    }
                     return;
                 }
-            });
-        }).putHeader("Accept", "application/xml").end();
+                response.bodyHandler(buffer -> {
+                    String xmlFeed = buffer.toString("UTF-8");
+                    StringReader xmlReader = new StringReader(xmlFeed);
+                    SyndFeedInput feedInput = new SyndFeedInput();
+                    try {
+                        SyndFeed feed = feedInput.build(xmlReader);
+                        JsonObject feedJson = FeedUtils.toJson(feed);
+                        log.info(feedJson);
+                        List<JsonObject> jsonEntries = FeedUtils.toJson(feed.getEntries(), maxDate);
+                        log.info("Insert " + jsonEntries.size() + " entries into Redis");
+                        if (jsonEntries.size() == 0) {
+                        	future.complete();
+                        	return;
+                        }
+                        vertx.eventBus().publish(feedId, new JsonArray(jsonEntries));
+                        redis.insertEntries(feedId, jsonEntries, handler -> {
+                            if (handler.failed()) {
+                                log.error("Insert failed", handler.cause());
+                                future.fail(handler.cause());
+                            } else {
+                                future.complete();
+                            }
+                        });
+                    } catch (FeedException fe) {
+                        log.error("Exception while reading feed : " + url.toString(), fe);
+                        future.fail(fe);
+                        return;
+                    }
+                });
+            }).putHeader("Accept", "application/xml").end();
+        });
     }
 
     private HttpClient createClient(URL url) {

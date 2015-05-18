@@ -7,6 +7,7 @@ vertxFeeds.controller('NewsFeedCtrl', ['$scope', '$http', function($scope, $http
 		try {
 			$scope.$apply();
 		} catch(all) {}
+		console.log("Nb entries : " + $scope.entries.length);
 	};
 	var connectToEventBus = function () {
 		var eb = new vertx.EventBus("http://localhost:9000/eventbus");

@@ -84,7 +84,7 @@ public class MongoDAO {
     }
 
     public void newSubscription(JsonObject user, JsonObject subscription, Handler<AsyncResult<?>> handler) {
-        JsonArray subscriptions = user.getJsonArray("subscriptions");
+        JsonArray subscriptions = user.getJsonArray("subscriptions", new JsonArray());
         subscriptions.add(subscription);
         String urlHash = subscription.getString("hash");
         JsonObject query = new JsonObject();
