@@ -7,6 +7,7 @@ import io.vertx.core.Vertx;
 import io.vertx.core.http.HttpClient;
 import io.vertx.core.http.HttpClientOptions;
 import io.vertx.core.json.JsonObject;
+import io.vertx.core.json.JsonArray;
 import io.vertx.core.logging.Logger;
 import io.vertx.core.logging.impl.LoggerFactory;
 import io.vertx.examples.feeds.dao.RedisDAO;
@@ -136,6 +137,8 @@ public class FeedBroker extends AbstractVerticle {
                     log.info(feedJson);
                     List<JsonObject> jsonEntries = FeedUtils.toJson(feed.getEntries());
                     log.info("Insert entries into Redis : " + jsonEntries);
+                    /* FIXME : store max(lastUpdate) somewhere (Mongo) and push only updates > max(lastUpdate) (in both Redis and the websocket) */
+                    vertx.eventBus().publish(feedId, new JsonArray(jsonEntries));
                     redis.insertEntries(feedId, jsonEntries, handler -> {
                         if (handler.failed()) {
                             log.error("Insert failed", handler.cause());

@@ -24,6 +24,9 @@ import io.vertx.ext.apex.sstore.LocalSessionStore;
 import io.vertx.ext.apex.sstore.SessionStore;
 import io.vertx.ext.apex.templ.HandlebarsTemplateEngine;
 import io.vertx.ext.mongo.MongoClient;
+import io.vertx.ext.apex.handler.sockjs.BridgeOptions;
+import io.vertx.ext.apex.handler.sockjs.PermittedOptions;
+import io.vertx.ext.apex.handler.sockjs.SockJSHandler;
 import io.vertx.redis.RedisClient;
 
 public class WebServer extends AbstractVerticle {
@@ -104,7 +107,19 @@ public class WebServer extends AbstractVerticle {
         /* API */
         router.mountSubRouter("/api", apiRouter(userContextHandler));
 
+        /* SockJS / EventBus */
+        router.route("/eventbus/*").handler(eventBusHandler());
+
         return router;
+    }
+
+    private SockJSHandler eventBusHandler() {
+        SockJSHandler handler = SockJSHandler.create(vertx);
+        BridgeOptions options = new BridgeOptions();
+        PermittedOptions permitted = new PermittedOptions(); // allow everything, we don't care for the demo
+        options.addOutboundPermitted(permitted);
+        handler.bridge(options);
+        return handler;
     }
 
     private Router staticHandler(Router router) {
