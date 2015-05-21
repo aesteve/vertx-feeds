@@ -15,7 +15,7 @@ dependencies {
     
     // Vert.x standard
 	compile 'io.vertx:vertx-core:3.0.0-SNAPSHOT'
-	compile 'io.vertx:vertx-apex:3.0.0-SNAPSHOT'
+	compile 'io.vertx:vertx-web:3.0.0-SNAPSHOT'
     
     // MongoDB
     compile 'io.vertx:vertx-mongo-client:3.0.0-SNAPSHOT'

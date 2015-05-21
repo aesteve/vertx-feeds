@@ -9,7 +9,7 @@ import io.vertx.core.logging.impl.LoggerFactory;
 import io.vertx.examples.feeds.dao.MongoDAO;
 import io.vertx.examples.feeds.dao.RedisDAO;
 import io.vertx.examples.feeds.utils.StringUtils;
-import io.vertx.ext.apex.RoutingContext;
+import io.vertx.ext.web.RoutingContext;
 
 import java.util.ArrayList;
 import java.util.List;

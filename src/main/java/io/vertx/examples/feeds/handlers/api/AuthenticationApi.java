@@ -4,8 +4,8 @@ import io.vertx.core.http.HttpServerResponse;
 import io.vertx.core.json.JsonObject;
 import io.vertx.examples.feeds.dao.MongoDAO;
 import io.vertx.examples.feeds.utils.StringUtils;
-import io.vertx.ext.apex.RoutingContext;
-import io.vertx.ext.apex.Session;
+import io.vertx.ext.web.RoutingContext;
+import io.vertx.ext.web.Session;
 
 public class AuthenticationApi {
 
