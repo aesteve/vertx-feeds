@@ -6,7 +6,7 @@ plugins {
 }
 
 repositories {
-	mavenLocal()
+    mavenLocal()
 	mavenCentral()
 	maven { url 'http://oss.sonatype.org/content/repositories/snapshots/' }
 }
@@ -15,6 +15,7 @@ dependencies {
     
     // Vert.x standard
 	compile 'io.vertx:vertx-core:3.0.0-SNAPSHOT'
+    compile 'io.vertx:vertx-auth:3.0.0-SNAPSHOT'
 	compile 'io.vertx:vertx-web:3.0.0-SNAPSHOT'
     
     // MongoDB
@@ -34,7 +35,7 @@ shadowJar  {
     classifier = ''
     manifest {
         attributes 'Main-Class': 'io.vertx.core.Starter'
-        attributes 'Main-Verticle': 'java:io.vertx.feeds.verticles.MainVerticle'
+        attributes 'Main-Verticle': 'java:io.vertx.examples.feeds.verticles.MainVerticle'
     }
     mergeServiceFiles {
         include 'META-INF/services/io.vertx.core.spi.VerticleFactory'
@@ -43,6 +44,12 @@ shadowJar  {
         exclude(dependency('io.vertx:codegen'))
         exclude(dependency('junit:junit'))
         exclude(dependency('org.mvel:mvel2'))
+    }
+    into 'webroot', {
+        from 'webroot'
+    }
+    into 'templates', {
+        from 'templates'
     }
 }
 
