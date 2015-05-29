@@ -1,37 +1,45 @@
 package io.vertx.examples.feeds.utils.async;
 
 import io.vertx.core.Future;
+import io.vertx.core.Handler;
 import io.vertx.core.logging.Logger;
 import io.vertx.core.logging.impl.LoggerFactory;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.HashMap;
+import java.util.Map;
 
-public class MultipleFutures<T> extends SimpleFuture<T> {
+public class MultipleFutures extends SimpleFuture<Void> {
 
-    private final List<Future<T>> futures;
+    private final Map<Handler<Future<Void>>, Future<Void>> consumers;
     private static final Logger log = LoggerFactory.getLogger(MultipleFutures.class);
 
     public MultipleFutures() {
-        this.futures = new ArrayList<Future<T>>();
+        consumers = new HashMap<Handler<Future<Void>>, Future<Void>>();
     }
 
-    public void addFuture(Future<T> future) {
-        this.futures.add(future);
-        future.setHandler(handler -> {
+    public void add(Handler<Future<Void>> handler) {
+        Future<Void> future = Future.future();
+        future.setHandler(futureHandler -> {
             checkCallHandler();
+        });
+        consumers.put(handler, future);
+    }
+
+    public void start() {
+        consumers.forEach((consumer, future) -> {
+            consumer.handle(future);
         });
     }
 
     @Override
-    public T result() {
+    public Void result() {
         return null;
     }
 
     @Override
     public Throwable cause() {
         Exception e = new Exception("At least one future failed");
-        futures.forEach(future -> {
+        consumers.forEach((consumer, future) -> {
             if (future.cause() != null) {
                 log.error(future.cause());
                 if (e.getCause() == null) {
@@ -46,21 +54,21 @@ public class MultipleFutures<T> extends SimpleFuture<T> {
 
     @Override
     public boolean succeeded() {
-        return futures.stream().allMatch(future -> {
+        return consumers.values().stream().allMatch(future -> {
             return future.succeeded();
         });
     }
 
     @Override
     public boolean failed() {
-        return futures.stream().anyMatch(future -> {
+        return consumers.values().stream().anyMatch(future -> {
             return future.failed();
         });
     }
 
     @Override
     public boolean isComplete() {
-        return futures.stream().allMatch(future -> {
+        return consumers.values().stream().allMatch(future -> {
             return future.isComplete();
         });
     }

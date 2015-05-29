@@ -6,8 +6,8 @@ import io.vertx.core.Future;
 import io.vertx.core.Vertx;
 import io.vertx.core.http.HttpClient;
 import io.vertx.core.http.HttpClientOptions;
-import io.vertx.core.json.JsonObject;
 import io.vertx.core.json.JsonArray;
+import io.vertx.core.json.JsonObject;
 import io.vertx.core.logging.Logger;
 import io.vertx.core.logging.impl.LoggerFactory;
 import io.vertx.examples.feeds.dao.RedisDAO;
@@ -19,9 +19,7 @@ import io.vertx.redis.RedisClient;
 import java.io.StringReader;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.stream.Collectors;
 
 import com.rometools.rome.feed.synd.SyndFeed;
@@ -77,32 +75,27 @@ public class FeedBroker extends AbstractVerticle {
     private void readFeeds() {
         mongo.find("feeds", new JsonObject(), result -> {
             if (result.failed()) {
-                if (result.cause() != null) {
-                    result.cause().printStackTrace(); // TODO : log instead
-                    }
-                } else {
-                    List<JsonObject> allFeeds = result.result();
-                    List<JsonObject> feeds = allFeeds.stream().filter(feed -> {
-                        return feed.getInteger("subscriber_count") > 0;
-                    }).collect(Collectors.toList());
-                    MultipleFutures<Void> fetchFeedsFuture = new MultipleFutures<Void>();
-                    Map<JsonObject, Future<Void>> futuresByFeed = new HashMap<JsonObject, Future<Void>>(feeds.size());
-                    feeds.forEach(feed -> {
-                        Future<Void> future = Future.future();
-                        fetchFeedsFuture.addFuture(future);
-                        futuresByFeed.put(feed, future);
+                log.error("Could not retrieve feed list from Mongo", result.cause());
+            } else {
+                List<JsonObject> allFeeds = result.result();
+                List<JsonObject> feeds = allFeeds.stream().filter(feed -> {
+                    return feed.getInteger("subscriber_count") > 0;
+                }).collect(Collectors.toList());
+                MultipleFutures fetchFeedsFuture = new MultipleFutures();
+                feeds.forEach(feed -> {
+                    fetchFeedsFuture.add(feedFuture -> {
+                        readFeed(feed, feedFuture);
                     });
-                    fetchFeedsFuture.setHandler(fetchResult -> {
-                        // No matter if failed or succeeded -> re-launch periodically
-                        this.timerId = vertx.setTimer(POLL_PERIOD, timerId -> {
-                            this.readFeeds();
-                        });
+                });
+                fetchFeedsFuture.setHandler(fetchResult -> {
+                    // No matter if failed or succeeded -> re-launch periodically
+                    timerId = vertx.setTimer(POLL_PERIOD, timerId -> {
+                        readFeeds();
                     });
-                    futuresByFeed.forEach((feed, future) -> {
-                        readFeed(feed, future);
-                    });
-                }
-            });
+                });
+                fetchFeedsFuture.start();
+            }
+        });
     }
 
     public void readFeed(JsonObject jsonFeed, Future<Void> future) {
@@ -118,7 +111,7 @@ public class FeedBroker extends AbstractVerticle {
             }
             return;
         }
-        
+
         redis.getMaxDate(feedId, maxDate -> {
             HttpClient client = createClient(url);
             client.get(url.getPath(), response -> {
@@ -140,8 +133,8 @@ public class FeedBroker extends AbstractVerticle {
                         List<JsonObject> jsonEntries = FeedUtils.toJson(feed.getEntries(), maxDate);
                         log.info("Insert " + jsonEntries.size() + " entries into Redis");
                         if (jsonEntries.size() == 0) {
-                        	future.complete();
-                        	return;
+                            future.complete();
+                            return;
                         }
                         vertx.eventBus().publish(feedId, new JsonArray(jsonEntries));
                         redis.insertEntries(feedId, jsonEntries, handler -> {
