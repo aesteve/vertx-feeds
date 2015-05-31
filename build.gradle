@@ -6,7 +6,6 @@ plugins {
 }
 
 repositories {
-    mavenLocal()
 	mavenCentral()
 	maven { url 'http://oss.sonatype.org/content/repositories/snapshots/' }
 }
@@ -15,7 +14,6 @@ dependencies {
     
     // Vert.x standard
 	compile 'io.vertx:vertx-core:3.0.0-SNAPSHOT'
-    compile 'io.vertx:vertx-auth:3.0.0-SNAPSHOT'
 	compile 'io.vertx:vertx-web:3.0.0-SNAPSHOT'
     
     // MongoDB
