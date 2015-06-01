@@ -6,9 +6,8 @@ import java.util.function.Function;
 
 public class AsyncResultAdapter<T, R> extends SimpleAsyncResult<R> {
 
-	public AsyncResultAdapter(AsyncResult<T> original, Function<T, R> transform) {
-		super(original.cause(), original.result() == null ? null : transform
-				.apply(original.result()));
-	}
+    public AsyncResultAdapter(AsyncResult<T> original, Function<T, R> transform) {
+        super(original.cause(), original.result() == null ? null : transform.apply(original.result()));
+    }
 
 }
