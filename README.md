@@ -84,6 +84,8 @@ You'll find :
 * how to use `vertx-redis-client` to store items in a redis set asynchronously
 * a very simple implementation of the publish / subscribe pattern on Vert.x's event bus, one of its key features.
 * how to expose Vert.x's event bus messages on client-side thanks to Vert.x `EventBusBridge` using `sockjs`
+* examples of code involving Java 8 lambdas to deal with an asynchronous API
+* some (hopefully) useful classes to deal with asynchronous stuff, like the `MultipleFutures` class
 
 For now, the project is here for you to read its code, not **at all** for production use.
 
