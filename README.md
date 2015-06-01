@@ -100,7 +100,7 @@ I'm currently looking at the embedded versions of Mongo and Redis to make stuff 
 
 The project is completely free. You can fork the project, use it for your own purpose if you want to.
 
-Feel free to open issues, or ask questions on [Vert.x Google Group](https://groups.google.com/forum/#!forum/vertx) if you have any.
+Feel free to open issues, or ask questions on [Vert.x Google Group](https://groups.google.com/forum/#!topic/vertx/2WDDAJ6KoAw) if you have any.
 
 Feel free to highlight source code that you don't understand or would have written in a different way, I'd be happy to discuss and even more happy if you're right and point me at a more elegant way to write the application's source code.
 
