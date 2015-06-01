@@ -86,7 +86,24 @@ You'll find :
 * how to expose Vert.x's event bus messages on client-side thanks to Vert.x `EventBusBridge` using `sockjs`
 * examples of code involving Java 8 lambdas to deal with an asynchronous API
 * some (hopefully) useful classes to deal with asynchronous stuff, like the `MultipleFutures` class
+* how to package a whole Vert.x application (fatJar) using Gradle, see `build.gradle`
 
 For now, the project is here for you to read its code, not **at all** for production use.
 
-If you want to run it on your local machine, you need to have both a Redis store and a Mongo database running on default host / port. I'm currently looking at the embedded versions of these two projects to make stuff even more easy to run locally. 
+If you want to run it on your local machine, you need to have both a Redis store and a Mongo database running on default host / port. Then simply, from the root of the project, input `./gradlew start` from the command-line. If you want to run it from your IDE, you have to create a "Run configuration" involving `io.vertx.core.Starter` as main-class with the following arguments : `run io.vertx.examples.feeds.verticles.MainVerticle`. This way you can easily debug the source code.
+
+
+I'm currently looking at the embedded versions of Mongo and Redis to make stuff even more easy to run locally.
+
+
+## Contributing
+
+The project is completely free. You can fork the project, use it for your own purpose if you want to.
+
+Feel free to open issues, or ask questions on [Vert.x Google Group](https://groups.google.com/forum/#!forum/vertx) if you have any.
+
+Feel free to highlight source code that you don't understand or would have written in a different way, I'd be happy to discuss and even more happy if you're right and point me at a more elegant way to write the application's source code.
+
+Obviously, you can submit a Pull Request if you're pretty sure something would be better if written differently, or that a key feature of Vert.x is missing and you'd like it to be illustrated in this example (but keep in mind this project should be kept simple, it's already a bit complicated to dive in).
+
+Thanks anyway for any kind of contribution you could submit, it's greatly appreciated. :) 
