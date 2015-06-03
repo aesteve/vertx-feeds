@@ -38,11 +38,14 @@ public class FeedUtils {
     public static List<JsonObject> toJson(List<SyndEntry> entries, Date maxDate) {
         List<JsonObject> result = new ArrayList<JsonObject>(entries.size());
         entries.forEach(entry -> {
-        	Date published = entry.getPublishedDate();
-        	if (maxDate == null || published.compareTo(maxDate) > 0) {
-        		System.out.println("maxDate = "+maxDate);
+            Date published = entry.getPublishedDate();
+            if (published == null) {
+                published = entry.getUpdatedDate();
+            }
+            if (maxDate == null || (published != null && published.compareTo(maxDate) > 0)) {
+                log.info("maxDate = " + maxDate);
                 result.add(toJson(entry));
-        	}
+            }
         });
         return result;
     }
@@ -65,9 +68,9 @@ public class FeedUtils {
         }
         return json;
     }
-    
+
     public static Date getDate(String isoDate) throws ParseException {
-    	return isoDateFormat.parse(isoDate);
+        return isoDateFormat.parse(isoDate);
     }
 
     public static String toJson(Date date) {

@@ -8,6 +8,7 @@ plugins {
 repositories {
 	mavenCentral()
 	maven { url 'http://oss.sonatype.org/content/repositories/snapshots/' }
+    maven { url 'http://clojars.org/repo' }
 }
 
 dependencies {
@@ -18,8 +19,10 @@ dependencies {
     
     // MongoDB
     compile 'io.vertx:vertx-mongo-client:3.0.0-SNAPSHOT'
+    compile 'de.flapdoodle.embed:de.flapdoodle.embed.mongo:1.47.0'
 	// Redis
 	compile 'io.vertx:vertx-redis-client:3.0.0-SNAPSHOT'
+    compile 'redis.embedded:embedded-redis:0.6'
 	
     
     // Handlebars

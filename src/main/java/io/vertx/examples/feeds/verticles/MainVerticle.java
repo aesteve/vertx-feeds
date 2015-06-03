@@ -4,8 +4,10 @@ import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Context;
 import io.vertx.core.DeploymentOptions;
 import io.vertx.core.Future;
+import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonObject;
+import io.vertx.examples.feeds.utils.async.MultipleFutures;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -15,22 +17,66 @@ import java.util.List;
  */
 public class MainVerticle extends AbstractVerticle {
 
+    public static final int REDIS_PORT = 8888;
+    public static final int MONGO_PORT = 27017;
+
     private List<String> deploymentIds;
 
     @Override
     public void init(Vertx vertx, Context context) {
         super.init(vertx, context);
-        deploymentIds = new ArrayList<String>(2);
+        deploymentIds = new ArrayList<String>(3);
     }
 
     @Override
     public void start(Future<Void> future) {
+        deployEmbeddedDbs(future, this::deployFeedBroker);
+    }
+
+    private void deployEmbeddedDbs(Future<Void> future, Handler<Future<Void>> whatsNext) {
+        MultipleFutures dbDeployments = new MultipleFutures();
+        dbDeployments.add(this::deployEmbeddedRedis);
+        dbDeployments.add(this::deployEmbeddedMongo);
+        dbDeployments.setHandler(result -> {
+            if (result.failed()) {
+                future.fail(result.cause());
+            } else {
+                whatsNext.handle(future);
+            }
+        });
+        dbDeployments.start();
+    }
+
+    private void deployEmbeddedRedis(Future<Void> future) {
+        DeploymentOptions options = new DeploymentOptions();
+        options.setWorker(true);
+        vertx.deployVerticle(EmbeddedRedis.class.getName(), options, result -> {
+            if (result.failed()) {
+                future.fail(result.cause());
+            } else {
+                future.complete();
+            }
+        });
+    }
+
+    private void deployEmbeddedMongo(Future<Void> future) {
+        DeploymentOptions options = new DeploymentOptions();
+        options.setWorker(true);
+        vertx.deployVerticle(EmbeddedMongo.class.getName(), options, result -> {
+            if (result.failed()) {
+                future.fail(result.cause());
+            } else {
+                future.complete();
+            }
+        });
+    }
+
+    private void deployFeedBroker(Future<Void> future) {
         JsonObject dbConfig = new JsonObject();
         dbConfig.put("redis", redisConfig());
         dbConfig.put("mongo", mongoConfig());
         DeploymentOptions brokerOptions = new DeploymentOptions();
         brokerOptions.setConfig(dbConfig);
-        // brokerOptions.setWorker(true); // not a worker for now, since it's just doing async stuff
         vertx.deployVerticle(FeedBroker.class.getName(), brokerOptions, brokerResult -> {
             if (brokerResult.failed()) {
                 future.fail(brokerResult.cause());
@@ -60,7 +106,7 @@ public class MainVerticle extends AbstractVerticle {
     private JsonObject mongoConfig() {
         JsonObject config = new JsonObject();
         config.put("host", "localhost");
-        config.put("port", 27017);
+        config.put("port", MONGO_PORT);
         config.put("db_name", "vertx-feeds");
         return config;
     }
@@ -68,7 +114,7 @@ public class MainVerticle extends AbstractVerticle {
     private JsonObject redisConfig() {
         JsonObject config = new JsonObject();
         config.put("host", "localhost");
-        config.put("port", 6379);
+        config.put("port", REDIS_PORT);
         return config;
     }
 }
