@@ -17,104 +17,104 @@ import java.util.List;
  */
 public class MainVerticle extends AbstractVerticle {
 
-    public static final int REDIS_PORT = 8888;
-    public static final int MONGO_PORT = 27017;
+	public static final int REDIS_PORT = 8888;
+	public static final int MONGO_PORT = 8889;
 
-    private List<String> deploymentIds;
+	private List<String> deploymentIds;
 
-    @Override
-    public void init(Vertx vertx, Context context) {
-        super.init(vertx, context);
-        deploymentIds = new ArrayList<String>(3);
-    }
+	@Override
+	public void init(Vertx vertx, Context context) {
+		super.init(vertx, context);
+		deploymentIds = new ArrayList<String>(3);
+	}
 
-    @Override
-    public void start(Future<Void> future) {
-        deployEmbeddedDbs(future, this::deployFeedBroker);
-    }
+	@Override
+	public void start(Future<Void> future) {
+		deployEmbeddedDbs(future, this::deployFeedBroker);
+	}
 
-    private void deployEmbeddedDbs(Future<Void> future, Handler<Future<Void>> whatsNext) {
-        MultipleFutures dbDeployments = new MultipleFutures();
-        dbDeployments.add(this::deployEmbeddedRedis);
-        dbDeployments.add(this::deployEmbeddedMongo);
-        dbDeployments.setHandler(result -> {
-            if (result.failed()) {
-                future.fail(result.cause());
-            } else {
-                whatsNext.handle(future);
-            }
-        });
-        dbDeployments.start();
-    }
+	private void deployEmbeddedDbs(Future<Void> future, Handler<Future<Void>> whatsNext) {
+		MultipleFutures dbDeployments = new MultipleFutures();
+		dbDeployments.add(this::deployEmbeddedRedis);
+		dbDeployments.add(this::deployEmbeddedMongo);
+		dbDeployments.setHandler(result -> {
+			if (result.failed()) {
+				future.fail(result.cause());
+			} else {
+				whatsNext.handle(future);
+			}
+		});
+		dbDeployments.start();
+	}
 
-    private void deployEmbeddedRedis(Future<Void> future) {
-        DeploymentOptions options = new DeploymentOptions();
-        options.setWorker(true);
-        vertx.deployVerticle(EmbeddedRedis.class.getName(), options, result -> {
-            if (result.failed()) {
-                future.fail(result.cause());
-            } else {
-                future.complete();
-            }
-        });
-    }
+	private void deployEmbeddedRedis(Future<Void> future) {
+		DeploymentOptions options = new DeploymentOptions();
+		options.setWorker(true);
+		vertx.deployVerticle(EmbeddedRedis.class.getName(), options, result -> {
+			if (result.failed()) {
+				future.fail(result.cause());
+			} else {
+				future.complete();
+			}
+		});
+	}
 
-    private void deployEmbeddedMongo(Future<Void> future) {
-        DeploymentOptions options = new DeploymentOptions();
-        options.setWorker(true);
-        vertx.deployVerticle(EmbeddedMongo.class.getName(), options, result -> {
-            if (result.failed()) {
-                future.fail(result.cause());
-            } else {
-                future.complete();
-            }
-        });
-    }
+	private void deployEmbeddedMongo(Future<Void> future) {
+		DeploymentOptions options = new DeploymentOptions();
+		options.setWorker(true);
+		vertx.deployVerticle(EmbeddedMongo.class.getName(), options, result -> {
+			if (result.failed()) {
+				future.fail(result.cause());
+			} else {
+				future.complete();
+			}
+		});
+	}
 
-    private void deployFeedBroker(Future<Void> future) {
-        JsonObject dbConfig = new JsonObject();
-        dbConfig.put("redis", redisConfig());
-        dbConfig.put("mongo", mongoConfig());
-        DeploymentOptions brokerOptions = new DeploymentOptions();
-        brokerOptions.setConfig(dbConfig);
-        vertx.deployVerticle(FeedBroker.class.getName(), brokerOptions, brokerResult -> {
-            if (brokerResult.failed()) {
-                future.fail(brokerResult.cause());
-            } else {
-                deploymentIds.add(brokerResult.result());
-                DeploymentOptions webserverOptions = new DeploymentOptions();
-                webserverOptions.setConfig(dbConfig);
-                vertx.deployVerticle(WebServer.class.getName(), webserverOptions, serverResult -> {
-                    if (serverResult.failed()) {
-                        future.fail(serverResult.cause());
-                    } else {
-                        deploymentIds.add(serverResult.result());
-                        future.complete();
-                    }
-                });
-            }
-        });
-    }
+	private void deployFeedBroker(Future<Void> future) {
+		JsonObject dbConfig = new JsonObject();
+		dbConfig.put("redis", redisConfig());
+		dbConfig.put("mongo", mongoConfig());
+		DeploymentOptions brokerOptions = new DeploymentOptions();
+		brokerOptions.setConfig(dbConfig);
+		vertx.deployVerticle(FeedBroker.class.getName(), brokerOptions, brokerResult -> {
+			if (brokerResult.failed()) {
+				future.fail(brokerResult.cause());
+			} else {
+				deploymentIds.add(brokerResult.result());
+				DeploymentOptions webserverOptions = new DeploymentOptions();
+				webserverOptions.setConfig(dbConfig);
+				vertx.deployVerticle(WebServer.class.getName(), webserverOptions, serverResult -> {
+					if (serverResult.failed()) {
+						future.fail(serverResult.cause());
+					} else {
+						deploymentIds.add(serverResult.result());
+						future.complete();
+					}
+				});
+			}
+		});
+	}
 
-    @Override
-    public void stop(Future<Void> future) {
-        deploymentIds.forEach(deploymentId -> {
-            vertx.undeploy(deploymentId);
-        });
-    }
+	@Override
+	public void stop(Future<Void> future) {
+		deploymentIds.forEach(deploymentId -> {
+			vertx.undeploy(deploymentId);
+		});
+	}
 
-    private JsonObject mongoConfig() {
-        JsonObject config = new JsonObject();
-        config.put("host", "localhost");
-        config.put("port", MONGO_PORT);
-        config.put("db_name", "vertx-feeds");
-        return config;
-    }
+	private JsonObject mongoConfig() {
+		JsonObject config = new JsonObject();
+		config.put("host", "localhost");
+		config.put("port", MONGO_PORT);
+		config.put("db_name", "vertx-feeds");
+		return config;
+	}
 
-    private JsonObject redisConfig() {
-        JsonObject config = new JsonObject();
-        config.put("host", "localhost");
-        config.put("port", REDIS_PORT);
-        return config;
-    }
+	private JsonObject redisConfig() {
+		JsonObject config = new JsonObject();
+		config.put("host", "localhost");
+		config.put("port", REDIS_PORT);
+		return config;
+	}
 }
