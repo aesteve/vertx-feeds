@@ -28,6 +28,7 @@ import io.vertx.ext.web.handler.sockjs.BridgeOptions;
 import io.vertx.ext.web.handler.sockjs.PermittedOptions;
 import io.vertx.ext.web.handler.sockjs.SockJSHandler;
 import io.vertx.redis.RedisClient;
+import static io.vertx.core.http.HttpHeaders.*;
 
 public class WebServer extends AbstractVerticle {
 
@@ -159,7 +160,7 @@ public class WebServer extends AbstractVerticle {
         router.route().produces("application/json");
         router.route().handler(BodyHandler.create());
         router.route().handler(context -> {
-            context.response().headers().add("Content-Type", "application/json");
+            context.response().headers().add(CONTENT_TYPE, "application/json");
             context.next();
         });
 
