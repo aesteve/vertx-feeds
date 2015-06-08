@@ -9,7 +9,7 @@ import io.vertx.core.http.HttpClientOptions;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.logging.Logger;
-import io.vertx.core.logging.impl.LoggerFactory;
+import io.vertx.core.logging.LoggerFactory;
 import io.vertx.examples.feeds.dao.RedisDAO;
 import io.vertx.examples.feeds.utils.async.MultipleFutures;
 import io.vertx.examples.feeds.utils.rss.FeedUtils;
@@ -47,14 +47,8 @@ public class FeedBroker extends AbstractVerticle {
     public void start(Future<Void> future) {
         mongo = MongoClient.createShared(vertx, config.getJsonObject("mongo"));
         redis = new RedisDAO(RedisClient.create(vertx, config.getJsonObject("redis")));
-        redis.start(handler -> {
-            if (handler.succeeded()) {
-                readFeeds();
-                future.complete();
-            } else {
-                future.fail(handler.cause());
-            }
-        });
+        readFeeds();
+        future.complete();
     }
 
     @Override
@@ -63,13 +57,7 @@ public class FeedBroker extends AbstractVerticle {
             vertx.cancelTimer(timerId);
         }
         mongo.close();
-        redis.stop(handler -> {
-            if (handler.succeeded()) {
-                future.complete();
-            } else {
-                future.fail(handler.cause());
-            }
-        });
+        future.complete();
     }
 
     private void readFeeds() {

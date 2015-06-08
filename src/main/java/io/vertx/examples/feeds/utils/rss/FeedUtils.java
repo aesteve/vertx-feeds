@@ -2,7 +2,7 @@ package io.vertx.examples.feeds.utils.rss;
 
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.logging.Logger;
-import io.vertx.core.logging.impl.LoggerFactory;
+import io.vertx.core.logging.LoggerFactory;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;

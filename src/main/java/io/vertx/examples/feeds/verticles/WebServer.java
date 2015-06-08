@@ -52,16 +52,14 @@ public class WebServer extends AbstractVerticle {
         redis = new RedisDAO(RedisClient.create(vertx, config.getJsonObject("redis")));
         authApi = new AuthenticationApi(mongo);
         feedsApi = new FeedsApi(mongo, redis);
-        redis.start(handler -> {
-            server = vertx.createHttpServer(createOptions());
-            server.requestHandler(createRouter()::accept);
-            server.listen(result -> {
-                if (result.succeeded()) {
-                    future.complete();
-                } else {
-                    future.fail(result.cause());
-                }
-            });
+        server = vertx.createHttpServer(createOptions());
+        server.requestHandler(createRouter()::accept);
+        server.listen(result -> {
+            if (result.succeeded()) {
+                future.complete();
+            } else {
+                future.fail(result.cause());
+            }
         });
     }
 
