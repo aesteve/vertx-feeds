@@ -92,6 +92,8 @@ For now, the project is here for you to read its code, not **at all** for produc
 
 If you want to run it on your local machine, from the root of the project, type in `./gradlew start` from the command-line. If you want to run it from your IDE, you have to create a "Run configuration" involving `io.vertx.core.Starter` as main-class with the following arguments : `run io.vertx.examples.feeds.verticles.MainVerticle`. This way you can easily debug the source code.
 
+Then you can point your browser at : http://localhost:9000/index.hbs and you should see the home page.
+
 Redis and Mongo are embedded in the application so that you don't need to install them locally.
 
 
