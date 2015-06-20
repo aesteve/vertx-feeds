@@ -98,8 +98,22 @@ public class MainVerticle extends AbstractVerticle {
 
 	@Override
 	public void stop(Future<Void> future) {
+		MultipleFutures futures = new MultipleFutures(future);
 		deploymentIds.forEach(deploymentId -> {
-			vertx.undeploy(deploymentId);
+			futures.add(fut -> {
+				undeploy(deploymentId, fut);
+			});
+		});
+		futures.start();
+	}
+
+	private void undeploy(String deploymentId, Future<Void> future) {
+		vertx.undeploy(deploymentId, res -> {
+			if (res.succeeded()) {
+				future.complete();
+			} else {
+				future.fail(res.cause());
+			}
 		});
 	}
 
