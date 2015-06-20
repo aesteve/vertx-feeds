@@ -3,10 +3,12 @@ package io.vertx.examples.feeds.verticles;
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Context;
 import io.vertx.core.Future;
+import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
 import io.vertx.core.buffer.Buffer;
 import io.vertx.core.http.HttpClient;
 import io.vertx.core.http.HttpClientOptions;
+import io.vertx.core.http.HttpClientResponse;
 import io.vertx.core.http.HttpHeaders;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
@@ -22,7 +24,9 @@ import java.io.StringReader;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import com.rometools.rome.feed.synd.SyndFeed;
 import com.rometools.rome.io.FeedException;
@@ -38,18 +42,20 @@ public class FeedBroker extends AbstractVerticle {
 	private MongoClient mongo;
 	private RedisDAO redis;
 	private Long timerId;
+	private Map<String, HttpClient> clients;
 
 	@Override
 	public void init(Vertx vertx, Context context) {
 		super.init(vertx, context);
 		config = context.config();
+		clients = new HashMap<String, HttpClient>();
 	}
 
 	@Override
 	public void start(Future<Void> future) {
 		mongo = MongoClient.createShared(vertx, config.getJsonObject("mongo"));
 		redis = new RedisDAO(RedisClient.create(vertx, config.getJsonObject("redis")));
-		readFeeds();
+		fetchFeeds();
 		future.complete();
 	}
 
@@ -59,10 +65,13 @@ public class FeedBroker extends AbstractVerticle {
 			vertx.cancelTimer(timerId);
 		}
 		mongo.close();
+		clients.forEach((url, client) -> {
+			client.close();
+		});
 		future.complete();
 	}
 
-	private void readFeeds() {
+	private void fetchFeeds() {
 		JsonObject crit = new JsonObject();
 		JsonObject gt0 = new JsonObject();
 		gt0.put("$gt", 0);
@@ -83,10 +92,9 @@ public class FeedBroker extends AbstractVerticle {
 				readFeed(feed, feedFuture);
 			});
 		});
-		fetchFeedsFuture.setHandler(fetchResult -> {
-			/* No matter if failed or succeeded -> re-launch periodically */
+		fetchFeedsFuture.setHandler(fetchResult -> { /* No matter if failed or succeeded -> re-launch periodically */
 			timerId = vertx.setTimer(POLL_PERIOD, timerId -> {
-				readFeeds();
+				fetchFeeds();
 			});
 		});
 		fetchFeedsFuture.start();
@@ -105,8 +113,7 @@ public class FeedBroker extends AbstractVerticle {
 		}
 
 		redis.getMaxDate(feedId, maxDate -> {
-			HttpClient client = createClient(url);
-			client.get(url.getPath(), response -> {
+			getXML(url, response -> {
 				int status = response.statusCode();
 				if (status < 200 || status >= 300) {
 					if (future != null) {
@@ -117,7 +124,7 @@ public class FeedBroker extends AbstractVerticle {
 				response.bodyHandler(buffer -> {
 					this.parseXmlFeed(buffer, maxDate, url, feedId, future);
 				});
-			}).putHeader(HttpHeaders.ACCEPT, "application/xml").end();
+			});
 		});
 	}
 
@@ -147,8 +154,23 @@ public class FeedBroker extends AbstractVerticle {
 		} catch (FeedException fe) {
 			log.error("Exception while reading feed : " + url.toString(), fe);
 			future.fail(fe);
-			return;
 		}
+	}
+
+	private void getXML(URL url, Handler<HttpClientResponse> responseHandler) {
+		client(url)
+				.get(url.getPath(), responseHandler)
+				.putHeader(HttpHeaders.ACCEPT, "application/xml")
+				.end();
+	}
+
+	private HttpClient client(URL url) {
+		HttpClient client = clients.get(url.getHost());
+		if (client == null) {
+			client = createClient(url);
+			clients.put(url.getHost(), client);
+		}
+		return client;
 	}
 
 	private HttpClient createClient(URL url) {
