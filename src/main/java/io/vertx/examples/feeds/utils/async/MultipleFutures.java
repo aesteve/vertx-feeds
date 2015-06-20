@@ -83,6 +83,9 @@ public class MultipleFutures extends SimpleFuture<Void> {
 
 	@Override
 	public boolean isComplete() {
+		if (super.isComplete()) { // has been marked explicitly
+			return true;
+		}
 		if (consumers.isEmpty()) {
 			return false;
 		}
