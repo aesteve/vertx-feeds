@@ -88,11 +88,7 @@ public class WebServer extends AbstractVerticle {
 
 	private Router createRouter() {
 		Router router = Router.router(vertx);
-		router.route().failureHandler(ErrorHandler.create(true)); /*
-																 * display
-																 * exception
-																 * details
-																 */
+		router.route().failureHandler(ErrorHandler.create(true));
 
 		/* Static resources */
 		staticHandler(router);
@@ -119,10 +115,7 @@ public class WebServer extends AbstractVerticle {
 	private SockJSHandler eventBusHandler() {
 		SockJSHandler handler = SockJSHandler.create(vertx);
 		BridgeOptions options = new BridgeOptions();
-		PermittedOptions permitted = new PermittedOptions(); // allow
-																// everything,
-																// we don't care
-																// for the demo
+		PermittedOptions permitted = new PermittedOptions(); /* allow everything, we don't care for the demo */
 		options.addOutboundPermitted(permitted);
 		handler.bridge(options);
 		return handler;
@@ -137,22 +130,13 @@ public class WebServer extends AbstractVerticle {
 
 	private Router dynamicPages(Router router) {
 		HandlebarsTemplateEngine hbsEngine = HandlebarsTemplateEngine.create();
-		hbsEngine.setMaxCacheSize(0); // no cache since we wan't hot-reload for
-										// templates
+		hbsEngine.setMaxCacheSize(0); /* no cache since we wan't hot-reload for templates */
 		TemplateHandler templateHandler = TemplateHandler.create(hbsEngine);
 		router.get("/private/*").handler(userContextHandler::fromSession);
 		router.getWithRegex(".+\\.hbs").handler(context -> {
 			final Session session = context.session();
-			context.data().put("userLogin", session.get("login")); /*
-																	 * in order
-																	 * to greet
-																	 * him
-																	 */
-			context.data().put("accessToken", session.get("accessToken")); /*
-																			 * for
-																			 * api
-																			 * calls
-																			 */
+			context.data().put("userLogin", session.get("login")); /* in order to greet him */
+			context.data().put("accessToken", session.get("accessToken")); /* for api calls */
 			context.next();
 		});
 		router.getWithRegex(".+\\.hbs").handler(templateHandler);
@@ -161,16 +145,8 @@ public class WebServer extends AbstractVerticle {
 
 	private Router apiRouter() {
 		/*
-		 * TODO : provide authentication through the AuthService / AuthProvider
-		 * instead of a custom api handler TODO : every page except login must
-		 * be private TODO : use FormLoginHandler for the actual login form TODO
-		 * : use RedirectAuthHandler for "/private"
-		 * 
-		 * router.route().handler(CookieHandler.create());
-		 * router.route().handler
-		 * (SessionHandler.create(LocalSessionStore.create(vertx)));
-		 * 
-		 * AuthProvider provider =
+		 * TODO : provide authentication through the AuthService / AuthProvider instead of a custom api handler
+		 * TODO : every page except login must be private TODO : use FormLoginHandler for the actual login form TODO : use RedirectAuthHandler for "/private"
 		 */
 		Router router = Router.router(vertx);
 		router.route().consumes("application/json");
