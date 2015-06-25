@@ -144,7 +144,7 @@ public class FeedsApi {
 			// OK, it's one of user's subscription
 			return (JsonObject) optional.get();
 		} else { // either the feed doesn't exist, or the user tries to access
-					// someone else's feed -> no distinction
+			     // someone else's feed -> no distinction
 			context.fail(403);
 			return null;
 		}

@@ -159,9 +159,9 @@ public class FeedBroker extends AbstractVerticle {
 
 	private void getXML(URL url, Handler<HttpClientResponse> responseHandler) {
 		client(url)
-				.get(url.getPath(), responseHandler)
-				.putHeader(HttpHeaders.ACCEPT, "application/xml")
-				.end();
+		                .get(url.getPath(), responseHandler)
+		                .putHeader(HttpHeaders.ACCEPT, "application/xml")
+		                .end();
 	}
 
 	private HttpClient client(URL url) {
