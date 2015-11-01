@@ -9,21 +9,24 @@ repositories {
 	mavenCentral()
 }
 
+def vertxVersion = '3.1.0'
+
 dependencies {
     
     // Vert.x standard
-	compile 'io.vertx:vertx-core:3.0.0'
-	compile 'io.vertx:vertx-web:3.0.0'
+	compile "io.vertx:vertx-core:$vertxVersion"
+	compile "io.vertx:vertx-web:$vertxVersion"
     
     // MongoDB
-    compile 'io.vertx:vertx-mongo-client:3.0.0'
+    compile "io.vertx:vertx-mongo-client:$vertxVersion"
     compile 'de.flapdoodle.embed:de.flapdoodle.embed.mongo:1.47.0'
 	// Redis
-	compile 'io.vertx:vertx-redis-client:3.0.0'
+	compile "io.vertx:vertx-redis-client:$vertxVersion"
     compile 'com.github.kstyrc:embedded-redis:0.6'
 	
     
     // Handlebars
+	compile "io.vertx:vertx-web-templ-handlebars:$vertxVersion"
     compile 'com.github.jknack:handlebars:2.1.0'
     
 	// RSS

@@ -15,6 +15,7 @@ import io.vertx.core.json.JsonObject;
 import io.vertx.core.logging.Logger;
 import io.vertx.core.logging.LoggerFactory;
 import io.vertx.examples.feeds.dao.RedisDAO;
+import io.vertx.examples.feeds.utils.RedisUtils;
 import io.vertx.examples.feeds.utils.async.MultipleFutures;
 import io.vertx.examples.feeds.utils.rss.FeedUtils;
 import io.vertx.ext.mongo.MongoClient;
@@ -54,7 +55,7 @@ public class FeedBroker extends AbstractVerticle {
 	@Override
 	public void start(Future<Void> future) {
 		mongo = MongoClient.createShared(vertx, config.getJsonObject("mongo"));
-		redis = new RedisDAO(RedisClient.create(vertx, config.getJsonObject("redis")));
+		redis = new RedisDAO(RedisClient.create(vertx, RedisUtils.createRedisOptions(config.getJsonObject("redis"))));
 		fetchFeeds();
 		future.complete();
 	}

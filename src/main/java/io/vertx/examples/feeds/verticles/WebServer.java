@@ -13,6 +13,7 @@ import io.vertx.examples.feeds.dao.RedisDAO;
 import io.vertx.examples.feeds.handlers.UserContextHandler;
 import io.vertx.examples.feeds.handlers.api.AuthenticationApi;
 import io.vertx.examples.feeds.handlers.api.FeedsApi;
+import io.vertx.examples.feeds.utils.RedisUtils;
 import io.vertx.ext.mongo.MongoClient;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.Session;
@@ -50,7 +51,7 @@ public class WebServer extends AbstractVerticle {
 	@Override
 	public void start(Future<Void> future) {
 		mongo = new MongoDAO(MongoClient.createShared(vertx, config.getJsonObject("mongo")));
-		redis = new RedisDAO(RedisClient.create(vertx, config.getJsonObject("redis")));
+		redis = new RedisDAO(RedisClient.create(vertx, RedisUtils.createRedisOptions(config.getJsonObject("redis"))));
 		authApi = new AuthenticationApi(mongo);
 		feedsApi = new FeedsApi(mongo, redis);
 		server = vertx.createHttpServer(createOptions());
