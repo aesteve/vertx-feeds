@@ -1,8 +1,8 @@
-## Feed aggregator using Vert.x 3 and Apex.
+## Feed aggregator using Vert.x 3 and Vertx-web.
 
 This project is designed to show what a real-life application can look like with Vert.x.
 
-It's a simple feed aggregator.
+It's a simple feed agregator.
 
 Every user can subscribe to some feeds (RSS, ...), then Vert.x will periodically read these feeds and store news (and notify connected clients). 
 
@@ -13,11 +13,11 @@ Users and their subscriptions user are store in MongoDB. Feed entries (RSS news 
 Simple use-case :
 
 * Users register using a simple login / password. An User is a simple document in MongoDB database. (there's no need for an email address in this demo)
-* Once they're registered, they can subscribe to feeds by prividing the feed's URL (and a color, for UI display). A Feed is another document in MongoDB.
+* Once they're registered, they can subscribe to feeds by providing the feed's URL (and a color, for UI display). A Feed is another document in MongoDB.
 * Subscriptions are stored in user infos (`user.subscriptions`) but also in a plain mongo collection listing feeds and the number of people who subscribed to this feed.
 * Periodically, a verticle lists the entries in the feeds collection and for each of the feeds that have a subscriber count > 0, will read the RSS feed and fetch new entries
 * New feed entries are store into JSON objects in a Redis set. The key is the feed's URL hash, the value is the JSON equivalent of the RSS entry and the score is the timestamp of the entry's publication date
-* When a user asks for his news feed entries are aggregated from Redis for each of his subscriptions
+* When a user asks for his news feed entries, they are aggregated from Redis for each of his subscriptions
 * When the new feed entries are stored into Redis, they're also pushed as a List of entries on Vertx's event bus. This allows end users who are connected from client side to receive real-time updates by subscribing directly to event bus notifications.
 
 
