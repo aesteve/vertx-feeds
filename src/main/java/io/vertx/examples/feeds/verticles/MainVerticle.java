@@ -54,6 +54,7 @@ public class MainVerticle extends AbstractVerticle {
 			if (result.failed()) {
 				future.fail(result.cause());
 			} else {
+				deploymentIds.add(result.result());
 				future.complete();
 			}
 		});
@@ -66,6 +67,7 @@ public class MainVerticle extends AbstractVerticle {
 			if (result.failed()) {
 				future.fail(result.cause());
 			} else {
+				deploymentIds.add(result.result());
 				future.complete();
 			}
 		});
