@@ -79,7 +79,7 @@ public class WebServer extends AbstractVerticle {
 		});
 	}
 
-	private HttpServerOptions createOptions() {
+	private static HttpServerOptions createOptions() {
 		HttpServerOptions options = new HttpServerOptions();
 		options.setHost("localhost");
 		options.setPort(9000);
@@ -121,7 +121,7 @@ public class WebServer extends AbstractVerticle {
 		return handler;
 	}
 
-	private Router staticHandler(Router router) {
+	private static Router staticHandler(Router router) {
 		StaticHandler staticHandler = StaticHandler.create();
 		staticHandler.setCachingEnabled(false);
 		router.route("/assets/*").handler(staticHandler);

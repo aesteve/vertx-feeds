@@ -117,7 +117,7 @@ public class MainVerticle extends AbstractVerticle {
 		});
 	}
 
-	private JsonObject mongoConfig() {
+	private static JsonObject mongoConfig() {
 		JsonObject config = new JsonObject();
 		config.put("host", "localhost");
 		config.put("port", MONGO_PORT);
@@ -125,7 +125,7 @@ public class MainVerticle extends AbstractVerticle {
 		return config;
 	}
 
-	private JsonObject redisConfig() {
+	private static JsonObject redisConfig() {
 		JsonObject config = new JsonObject();
 		config.put("host", "localhost");
 		config.put("port", REDIS_PORT);

@@ -125,7 +125,7 @@ public class FeedsApi {
 		}
 	}
 
-	private JsonObject getSubscription(JsonObject user, RoutingContext context) {
+	private static JsonObject getSubscription(JsonObject user, RoutingContext context) {
 		String feedId = context.request().getParam("feedId");
 		if (feedId == null) {
 			context.fail(400);

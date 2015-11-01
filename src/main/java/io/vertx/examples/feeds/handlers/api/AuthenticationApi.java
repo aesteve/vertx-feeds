@@ -64,7 +64,7 @@ public class AuthenticationApi {
 		redirectTo(context, "/index.hbs");
 	}
 
-	private void redirectTo(RoutingContext context, String url) {
+	private static void redirectTo(RoutingContext context, String url) {
 		HttpServerResponse response = context.response();
 		response.setStatusCode(303);
 		response.headers().add("Location", url);
