@@ -2,7 +2,8 @@ plugins {
 	id 'java'
 	id 'eclipse'
 	id 'idea'
-	id 'com.github.johnrengelman.shadow' version '1.2.1'
+	id 'application'
+	id 'com.github.johnrengelman.shadow' version '1.2.2'
 }
 
 repositories {
@@ -10,42 +11,37 @@ repositories {
 }
 
 def vertxVersion = '3.1.0'
+sourceCompatibility = '1.8'
 
 dependencies {
-    
-    // Vert.x standard
+	
+	// Vert.x standard
 	compile "io.vertx:vertx-core:$vertxVersion"
 	compile "io.vertx:vertx-web:$vertxVersion"
-    
-    // MongoDB
-    compile "io.vertx:vertx-mongo-client:$vertxVersion"
-    compile 'de.flapdoodle.embed:de.flapdoodle.embed.mongo:1.47.0'
+	
+	// MongoDB
+	compile "io.vertx:vertx-mongo-client:$vertxVersion"
+	compile 'de.flapdoodle.embed:de.flapdoodle.embed.mongo:1.47.0'
 	// Redis
 	compile "io.vertx:vertx-redis-client:$vertxVersion"
-    compile 'com.github.kstyrc:embedded-redis:0.6'
+	compile 'com.github.kstyrc:embedded-redis:0.6'
 	
-    
-    // Handlebars
+	
+	// Handlebars
 	compile "io.vertx:vertx-web-templ-handlebars:$vertxVersion"
-    compile 'com.github.jknack:handlebars:2.1.0'
-    
+	compile 'com.github.jknack:handlebars:2.1.0'
+	
 	// RSS
 	compile 'com.rometools:rome:1.5.0'
 }
 
+mainClassName = 'io.vertx.core.Launcher'
+def mainVerticle = 'io.vertx.examples.feeds.verticles.MainVerticle'
+
 shadowJar  {
     classifier = ''
-    manifest {
-        attributes 'Main-Class': 'io.vertx.core.Starter'
-        attributes 'Main-Verticle': 'java:io.vertx.examples.feeds.verticles.MainVerticle'
-    }
     mergeServiceFiles {
         include 'META-INF/services/io.vertx.core.spi.VerticleFactory'
-    }
-    dependencies {
-        exclude(dependency('io.vertx:codegen'))
-        exclude(dependency('junit:junit'))
-        exclude(dependency('org.mvel:mvel2'))
     }
     into 'webroot', {
         from 'webroot'
@@ -55,10 +51,10 @@ shadowJar  {
     }
 }
 
-task start(dependsOn: shadowJar) << {
-    javaexec { main="-jar"; args shadowJar.archivePath }
+run {
+	args = ['run', mainVerticle]
 }
 
 task wrapper(type: Wrapper) {
-	gradleVersion = '2.4'
+	gradleVersion = '2.9'
 }
