@@ -38,9 +38,10 @@ public class SimpleFuture<T> implements Future<T> {
 	}
 
 	@Override
-	public void setHandler(Handler<AsyncResult<T>> handler) {
+	public Future<T> setHandler(Handler<AsyncResult<T>> handler) {
 		this.handler = handler;
 		checkCallHandler();
+		return this;
 	}
 
 	@Override
