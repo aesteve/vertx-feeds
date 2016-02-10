@@ -38,19 +38,19 @@ mainClassName = 'io.vertx.core.Launcher'
 def mainVerticle = 'io.vertx.examples.feeds.verticles.MainVerticle'
 
 shadowJar  {
-    classifier = ''
+	classifier = ''
 	manifest {
 		attributes 'Main-Verticle': 'io.vertx.examples.feeds.verticles.MainVerticle'
 	}
-    mergeServiceFiles {
-        include 'META-INF/services/io.vertx.core.spi.VerticleFactory'
-    }
-    into 'webroot', {
-        from 'webroot'
-    }
-    into 'templates', {
-        from 'templates'
-    }
+	mergeServiceFiles {
+		include 'META-INF/services/io.vertx.core.spi.VerticleFactory'
+	}
+	into 'webroot', {
+		from 'webroot'
+	}
+	into 'templates', {
+		from 'templates'
+	}
 }
 
 run {
