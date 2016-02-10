@@ -39,6 +39,9 @@ def mainVerticle = 'io.vertx.examples.feeds.verticles.MainVerticle'
 
 shadowJar  {
     classifier = ''
+	manifest {
+		attributes 'Main-Verticle': 'io.vertx.examples.feeds.verticles.MainVerticle'
+	}
     mergeServiceFiles {
         include 'META-INF/services/io.vertx.core.spi.VerticleFactory'
     }
