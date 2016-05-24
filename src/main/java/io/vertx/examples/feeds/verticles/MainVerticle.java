@@ -25,7 +25,7 @@ public class MainVerticle extends AbstractVerticle {
 	@Override
 	public void init(Vertx vertx, Context context) {
 		super.init(vertx, context);
-		deploymentIds = new ArrayList<String>(3);
+		deploymentIds = new ArrayList<>(3);
 	}
 
 	@Override
@@ -101,11 +101,7 @@ public class MainVerticle extends AbstractVerticle {
 	@Override
 	public void stop(Future<Void> future) {
 		MultipleFutures futures = new MultipleFutures(future);
-		deploymentIds.forEach(deploymentId -> {
-			futures.add(fut -> {
-				undeploy(deploymentId, fut);
-			});
-		});
+		deploymentIds.forEach(deploymentId -> futures.add(fut -> undeploy(deploymentId, fut)));
 		futures.start();
 	}
 

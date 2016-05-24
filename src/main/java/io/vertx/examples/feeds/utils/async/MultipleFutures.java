@@ -15,7 +15,7 @@ public class MultipleFutures extends SimpleFuture<Void> {
 	private static final Logger log = LoggerFactory.getLogger(MultipleFutures.class);
 
 	public MultipleFutures() {
-		consumers = new HashMap<Handler<Future<Void>>, Future<Void>>();
+		consumers = new HashMap<>();
 	}
 
 	public MultipleFutures(Future<Void> after) {
@@ -30,9 +30,7 @@ public class MultipleFutures extends SimpleFuture<Void> {
 
 	public void add(Handler<Future<Void>> handler) {
 		Future<Void> future = Future.future();
-		future.setHandler(futureHandler -> {
-			checkCallHandler();
-		});
+		future.setHandler(futureHandler -> checkCallHandler());
 		consumers.put(handler, future);
 	}
 
@@ -41,9 +39,7 @@ public class MultipleFutures extends SimpleFuture<Void> {
 			complete();
 			return;
 		}
-		consumers.forEach((consumer, future) -> {
-			consumer.handle(future);
-		});
+		consumers.forEach(Handler::handle);
 	}
 
 	@Override
@@ -69,16 +65,12 @@ public class MultipleFutures extends SimpleFuture<Void> {
 
 	@Override
 	public boolean succeeded() {
-		return consumers.values().stream().allMatch(future -> {
-			return future.succeeded();
-		});
+		return consumers.values().stream().allMatch(Future::succeeded);
 	}
 
 	@Override
 	public boolean failed() {
-		return consumers.values().stream().anyMatch(future -> {
-			return future.failed();
-		});
+		return consumers.values().stream().anyMatch(Future::failed);
 	}
 
 	@Override
@@ -89,9 +81,7 @@ public class MultipleFutures extends SimpleFuture<Void> {
 		if (consumers.isEmpty()) {
 			return false;
 		}
-		return consumers.values().stream().allMatch(future -> {
-			return future.isComplete();
-		});
+		return consumers.values().stream().allMatch(Future::isComplete);
 	}
 
 	public void join(Future<Void> future) {

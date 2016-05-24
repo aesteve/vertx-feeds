@@ -10,7 +10,7 @@ import java.util.List;
 
 public class MongoDAO {
 
-	private MongoClient mongo;
+	private final MongoClient mongo;
 
 	public MongoDAO(MongoClient mongo) {
 		this.mongo = mongo;
@@ -80,9 +80,7 @@ public class MongoDAO {
 				updateQuery.put("_id", feed.getString("_id"));
 				JsonObject updateValue = new JsonObject();
 				updateValue.put("$set", subscription);
-				mongo.update("feeds", updateQuery, updateValue, feedUpdateHandler -> {
-					handler.handle(feedUpdateHandler);
-				});
+				mongo.update("feeds", updateQuery, updateValue, handler::handle);
 			});
 
 		});
@@ -134,9 +132,7 @@ public class MongoDAO {
 		query.put("_id", user.getString("_id"));
 		JsonObject newSubscriptions = new JsonObject();
 		newSubscriptions.put("$set", new JsonObject().put("subscriptions", subscriptions));
-		mongo.update("users", query, newSubscriptions, res -> {
-			handler.handle(res);
-		});
+		mongo.update("users", query, newSubscriptions, handler::handle);
 	}
 
 }

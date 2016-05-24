@@ -20,11 +20,11 @@ import java.util.Optional;
  */
 public class FeedsApi {
 
-	private final static Logger log = LoggerFactory.getLogger(FeedsApi.class);
+	private static final Logger log = LoggerFactory.getLogger(FeedsApi.class);
 
-	private MongoDAO mongo;
-	private RedisDAO redis;
-	private StringUtils strUtils;
+	private final MongoDAO mongo;
+	private final RedisDAO redis;
+	private final StringUtils strUtils;
 
 	public FeedsApi(MongoDAO mongo, RedisDAO redis) {
 		this.mongo = mongo;
@@ -38,12 +38,10 @@ public class FeedsApi {
 		JsonArray subscriptions = user.getJsonArray("subscriptions");
 		final String urlHash = strUtils.hash256(body.getString("url"));
 		body.put("hash", urlHash);
-		if (subscriptions == null) {
-			subscriptions = new JsonArray();
-		} else {
-			boolean alreadySubscribed = subscriptions.stream().anyMatch(subscription -> {
-				return ((JsonObject) subscription).getString("hash").equals(urlHash);
-			});
+		if (subscriptions != null) {
+			boolean alreadySubscribed = subscriptions.stream().anyMatch(subscription ->
+					((JsonObject) subscription).getString("hash").equals(urlHash)
+			);
 			if (alreadySubscribed) {
 				context.fail(400);
 				return;
@@ -88,9 +86,8 @@ public class FeedsApi {
 			if (result.failed()) {
 				context.fail(result.cause());
 				return;
-			} else {
-				context.response().end(subscription.toString());
 			}
+			context.response().end(subscription.toString());
 		});
 	}
 
@@ -114,7 +111,7 @@ public class FeedsApi {
 					context.fail(handler.cause());
 				} else {
 					JsonArray orig = handler.result();
-					List<JsonObject> list = new ArrayList<JsonObject>(orig.size());
+					List<JsonObject> list = new ArrayList<>(orig.size());
 					orig.forEach(val -> {
 						log.info("found val : " + val);
 						list.add(new JsonObject(val.toString()));

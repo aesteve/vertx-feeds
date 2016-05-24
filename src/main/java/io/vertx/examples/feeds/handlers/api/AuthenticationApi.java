@@ -9,8 +9,15 @@ import io.vertx.ext.web.Session;
 
 public class AuthenticationApi {
 
-	private MongoDAO mongo;
-	private StringUtils strUtils;
+	private final MongoDAO mongo;
+	private final StringUtils strUtils;
+
+	private static final String LOGIN = "login";
+	private static final String PWD = "password";
+	private static final String ACCESS_TOKEN = "access_token";
+	private static final String INDEX = "/index.hbs";
+	private static final String USER_ID = "userId";
+
 
 	public AuthenticationApi(MongoDAO mongo) {
 		this.mongo = mongo;
@@ -18,20 +25,20 @@ public class AuthenticationApi {
 	}
 
 	public void register(RoutingContext context) {
-		final String login = context.request().getParam("login");
-		final String pwd = context.request().getParam("password");
+		final String login = context.request().getParam(LOGIN);
+		final String pwd = context.request().getParam(PWD);
 		mongo.newUser(login, strUtils.hash256(pwd), result -> {
 			if (result.failed()) {
 				context.fail(result.cause());
 			} else {
-				redirectTo(context, "/index.hbs");
+				redirectTo(context, INDEX);
 			}
 		});
 	}
 
 	public void login(RoutingContext context) {
-		final String login = context.request().getParam("login");
-		final String pwd = context.request().getParam("password");
+		final String login = context.request().getParam(LOGIN);
+		final String pwd = context.request().getParam(PWD);
 		mongo.userByLoginAndPwd(login, strUtils.hash256(pwd), result -> {
 			if (result.failed()) {
 				context.fail(result.cause());
@@ -44,24 +51,24 @@ public class AuthenticationApi {
 			}
 			Session session = context.session();
 			String accessToken = strUtils.generateToken();
-			session.put("accessToken", accessToken);
-			session.put("login", login);
-			session.put("userId", user.getString("_id"));
+			session.put(ACCESS_TOKEN, accessToken);
+			session.put(LOGIN, login);
+			session.put(USER_ID, user.getString("_id"));
 			context.vertx().sharedData().getLocalMap("access_tokens").put(accessToken, user.getString("_id"));
-			redirectTo(context, "/index.hbs");
+			redirectTo(context, INDEX);
 		});
 	}
 
 	public void logout(RoutingContext context) {
 		final Session session = context.session();
-		session.remove("login");
-		session.remove("userId");
-		String accessToken = session.get("accessToken");
+		session.remove(LOGIN);
+		session.remove(USER_ID);
+		String accessToken = session.get(ACCESS_TOKEN);
 		if (accessToken != null) {
 			context.vertx().sharedData().getLocalMap("access_tokens").remove(accessToken);
 		}
-		session.remove("accessToken");
-		redirectTo(context, "/index.hbs");
+		session.remove(ACCESS_TOKEN);
+		redirectTo(context, INDEX);
 	}
 
 	private static void redirectTo(RoutingContext context, String url) {

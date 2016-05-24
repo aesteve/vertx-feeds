@@ -1,6 +1,5 @@
 package io.vertx.examples.feeds.verticles;
 
-import static io.vertx.core.http.HttpHeaders.CONTENT_TYPE;
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Context;
 import io.vertx.core.Future;
@@ -17,12 +16,7 @@ import io.vertx.examples.feeds.utils.RedisUtils;
 import io.vertx.ext.mongo.MongoClient;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.Session;
-import io.vertx.ext.web.handler.BodyHandler;
-import io.vertx.ext.web.handler.CookieHandler;
-import io.vertx.ext.web.handler.ErrorHandler;
-import io.vertx.ext.web.handler.SessionHandler;
-import io.vertx.ext.web.handler.StaticHandler;
-import io.vertx.ext.web.handler.TemplateHandler;
+import io.vertx.ext.web.handler.*;
 import io.vertx.ext.web.handler.sockjs.BridgeOptions;
 import io.vertx.ext.web.handler.sockjs.PermittedOptions;
 import io.vertx.ext.web.handler.sockjs.SockJSHandler;
@@ -30,6 +24,8 @@ import io.vertx.ext.web.sstore.LocalSessionStore;
 import io.vertx.ext.web.sstore.SessionStore;
 import io.vertx.ext.web.templ.HandlebarsTemplateEngine;
 import io.vertx.redis.RedisClient;
+
+import static io.vertx.core.http.HttpHeaders.CONTENT_TYPE;
 
 public class WebServer extends AbstractVerticle {
 
@@ -39,7 +35,6 @@ public class WebServer extends AbstractVerticle {
 	private FeedsApi feedsApi;
 	private UserContextHandler userContextHandler;
 	private MongoDAO mongo;
-	private RedisDAO redis;
 	private JsonObject config;
 
 	@Override
@@ -51,7 +46,7 @@ public class WebServer extends AbstractVerticle {
 	@Override
 	public void start(Future<Void> future) {
 		mongo = new MongoDAO(MongoClient.createShared(vertx, config.getJsonObject("mongo")));
-		redis = new RedisDAO(RedisClient.create(vertx, RedisUtils.createRedisOptions(config.getJsonObject("redis"))));
+		RedisDAO redis = new RedisDAO(RedisClient.create(vertx, RedisUtils.createRedisOptions(config.getJsonObject("redis"))));
 		authApi = new AuthenticationApi(mongo);
 		feedsApi = new FeedsApi(mongo, redis);
 		server = vertx.createHttpServer(createOptions());
@@ -71,13 +66,7 @@ public class WebServer extends AbstractVerticle {
 			future.complete();
 			return;
 		}
-		server.close(result -> {
-			if (result.failed()) {
-				future.fail(result.cause());
-			} else {
-				future.complete();
-			}
-		});
+		server.close(future.completer());
 	}
 
 	private static HttpServerOptions createOptions() {
@@ -122,14 +111,13 @@ public class WebServer extends AbstractVerticle {
 		return handler;
 	}
 
-	private static Router staticHandler(Router router) {
+	private static void staticHandler(Router router) {
 		StaticHandler staticHandler = StaticHandler.create();
 		staticHandler.setCachingEnabled(false);
 		router.route("/assets/*").handler(staticHandler);
-		return router;
 	}
 
-	private Router dynamicPages(Router router) {
+	private void dynamicPages(Router router) {
 		HandlebarsTemplateEngine hbsEngine = HandlebarsTemplateEngine.create();
 		hbsEngine.setMaxCacheSize(0); /* no cache since we wan't hot-reload for templates */
 		TemplateHandler templateHandler = TemplateHandler.create(hbsEngine);
@@ -141,7 +129,6 @@ public class WebServer extends AbstractVerticle {
 			context.next();
 		});
 		router.getWithRegex(".+\\.hbs").handler(templateHandler);
-		return router;
 	}
 
 	private Router apiRouter() {

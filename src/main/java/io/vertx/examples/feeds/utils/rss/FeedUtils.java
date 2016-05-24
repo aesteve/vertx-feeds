@@ -1,5 +1,9 @@
 package io.vertx.examples.feeds.utils.rss;
 
+import com.rometools.rome.feed.synd.SyndContent;
+import com.rometools.rome.feed.synd.SyndEntry;
+import com.rometools.rome.feed.synd.SyndFeed;
+import com.rometools.rome.feed.synd.SyndImage;
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.logging.Logger;
 import io.vertx.core.logging.LoggerFactory;
@@ -10,18 +14,12 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
-import com.rometools.rome.feed.synd.SyndContent;
-import com.rometools.rome.feed.synd.SyndEntry;
-import com.rometools.rome.feed.synd.SyndFeed;
-import com.rometools.rome.feed.synd.SyndImage;
+public interface FeedUtils {
 
-public class FeedUtils {
+	Logger log = LoggerFactory.getLogger(FeedUtils.class);
+	SimpleDateFormat isoDateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSX");
 
-	private final static Logger log = LoggerFactory.getLogger(FeedUtils.class);
-
-	public static SimpleDateFormat isoDateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSX");
-
-	public static JsonObject toJson(SyndFeed feed) {
+	static JsonObject toJson(SyndFeed feed) {
 		JsonObject json = new JsonObject();
 		json.put("title", feed.getTitle());
 		json.put("description", feed.getDescription());
@@ -35,8 +33,8 @@ public class FeedUtils {
 
 	}
 
-	public static List<JsonObject> toJson(List<SyndEntry> entries, Date maxDate) {
-		List<JsonObject> result = new ArrayList<JsonObject>(entries.size());
+	static List<JsonObject> toJson(List<SyndEntry> entries, Date maxDate) {
+		List<JsonObject> result = new ArrayList<>(entries.size());
 		entries.forEach(entry -> {
 			Date published = entry.getPublishedDate();
 			if (published == null) {
@@ -50,7 +48,7 @@ public class FeedUtils {
 		return result;
 	}
 
-	public static JsonObject toJson(SyndEntry entry) {
+	static JsonObject toJson(SyndEntry entry) {
 		JsonObject json = new JsonObject();
 		json.put("title", entry.getTitle());
 		Date published = entry.getPublishedDate();
@@ -60,7 +58,7 @@ public class FeedUtils {
 			published = new Date(); // FIXME : absolutely wrong...
 		}
 		json.put("published", toJson(published));
-		json.put("score", Long.valueOf(published.getTime()).doubleValue());
+		json.put("score", (double)published.getTime());
 		json.put("link", entry.getLink());
 		SyndContent description = entry.getDescription();
 		if (description != null) {
@@ -69,11 +67,11 @@ public class FeedUtils {
 		return json;
 	}
 
-	public static Date getDate(String isoDate) throws ParseException {
+	static Date getDate(String isoDate) throws ParseException {
 		return isoDateFormat.parse(isoDate);
 	}
 
-	public static String toJson(Date date) {
+	static String toJson(Date date) {
 		if (date == null) {
 			return null;
 		}

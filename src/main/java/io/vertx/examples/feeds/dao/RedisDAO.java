@@ -20,7 +20,7 @@ public class RedisDAO {
 
 	private static final Logger log = LoggerFactory.getLogger(RedisDAO.class);
 
-	private RedisClient redis;
+	private final RedisClient redis;
 
 	public RedisDAO(RedisClient redis) {
 		this.redis = redis;
@@ -30,12 +30,12 @@ public class RedisDAO {
 		String fromStr;
 		String toStr;
 		if (from != null) {
-			fromStr = Double.toString(Long.valueOf(from.getTime()).doubleValue());
+			fromStr = Double.toString((double)from.getTime());
 		} else {
 			fromStr = "-inf";
 		}
 		if (to != null) {
-			toStr = Double.toString(Long.valueOf(from.getTime()).doubleValue());
+			toStr = Double.toString((double)to.getTime());
 		} else {
 			toStr = "+inf";
 		}
@@ -72,10 +72,8 @@ public class RedisDAO {
 	}
 
 	public void insertEntries(String feedHash, List<JsonObject> entries, Handler<AsyncResult<Long>> handler) {
-		Map<String, Double> members = new HashMap<String, Double>(entries.size());
-		entries.forEach(entry -> {
-			members.put(entry.toString(), entry.getDouble("score"));
-		});
+		Map<String, Double> members = new HashMap<>(entries.size());
+		entries.forEach(entry -> members.put(entry.toString(), entry.getDouble("score")));
 		redis.zaddMany(feedHash, members, handler);
 	}
 }

@@ -7,7 +7,7 @@ import io.vertx.ext.web.Session;
 
 public class UserContextHandler {
 
-	private MongoDAO mongo;
+	private final MongoDAO mongo;
 
 	public UserContextHandler(MongoDAO mongo) {
 		this.mongo = mongo;
