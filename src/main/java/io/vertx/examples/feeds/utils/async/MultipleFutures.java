@@ -12,7 +12,7 @@ import java.util.Map;
 public class MultipleFutures extends SimpleFuture<Void> {
 
 	private final Map<Handler<Future<Void>>, Future<Void>> consumers;
-	private static final Logger log = LoggerFactory.getLogger(MultipleFutures.class);
+	private static final Logger LOG = LoggerFactory.getLogger(MultipleFutures.class);
 
 	public MultipleFutures() {
 		consumers = new HashMap<>();
@@ -52,7 +52,7 @@ public class MultipleFutures extends SimpleFuture<Void> {
 		Exception e = new Exception("At least one future failed");
 		consumers.forEach((consumer, future) -> {
 			if (future.cause() != null) {
-				log.error(future.cause());
+				LOG.error(future.cause());
 				if (e.getCause() == null) {
 					e.initCause(future.cause());
 				} else {

@@ -20,7 +20,7 @@ import java.util.Optional;
  */
 public class FeedsApi {
 
-	private static final Logger log = LoggerFactory.getLogger(FeedsApi.class);
+	private static final Logger LOG = LoggerFactory.getLogger(FeedsApi.class);
 	public static final String COLUMN_SUBSCRIPTIONS = "subscriptions";
 	public static final String COLUMN_FEED_ID = "feedId";
 
@@ -115,7 +115,7 @@ public class FeedsApi {
 					JsonArray orig = handler.result();
 					List<JsonObject> list = new ArrayList<>(orig.size());
 					orig.forEach(val -> {
-						log.info("found val : " + val);
+						LOG.info("found val : " + val);
 						list.add(new JsonObject(val.toString()));
 					});
 					context.response().end(list.toString());

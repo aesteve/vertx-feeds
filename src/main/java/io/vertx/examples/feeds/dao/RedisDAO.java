@@ -18,7 +18,7 @@ import java.util.Map;
 
 public class RedisDAO {
 
-	private static final Logger log = LoggerFactory.getLogger(RedisDAO.class);
+	private static final Logger LOG = LoggerFactory.getLogger(RedisDAO.class);
 
 	private final RedisClient redis;
 
@@ -50,12 +50,12 @@ public class RedisDAO {
 		 */
 		redis.zrevrangebyscore(feedHash, "+inf", "-inf", RangeLimitOptions.NONE, result -> {
 			if (result.failed()) {
-				log.error("Fetch max date failed : ", result.cause());
+				LOG.error("Fetch max date failed : ", result.cause());
 				handler.handle(null);
 			} else {
 				JsonArray array = result.result();
 				if (array.isEmpty()) {
-					log.info("Fetch max date is null, array is empty for feedHash : " + feedHash);
+					LOG.info("Fetch max date is null, array is empty for feedHash : " + feedHash);
 					handler.handle(null);
 					return;
 				}
@@ -64,7 +64,7 @@ public class RedisDAO {
 				try {
 					handler.handle(FeedUtils.getDate(published));
 				} catch (ParseException pe) {
-					log.error("Could not fetch max date : ", pe);
+					LOG.error("Could not fetch max date : ", pe);
 					handler.handle(null);
 				}
 			}
