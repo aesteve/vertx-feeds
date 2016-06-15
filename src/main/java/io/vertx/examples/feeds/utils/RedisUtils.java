@@ -4,6 +4,8 @@ import io.vertx.core.json.JsonObject;
 import io.vertx.redis.RedisOptions;
 
 public class RedisUtils {
+
+	private RedisUtils() {}
 	
 	public static RedisOptions createRedisOptions(JsonObject conf) {
 		RedisOptions options = new RedisOptions();
