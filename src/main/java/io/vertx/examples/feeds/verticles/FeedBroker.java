@@ -32,7 +32,7 @@ public class FeedBroker extends AbstractVerticle {
 
 	// private final static Long POLL_PERIOD = 3600000l;
 	private final static Long POLL_PERIOD = 10000L;
-	private final static Logger log = LoggerFactory.getLogger(FeedBroker.class);
+	private final static Logger LOG = LoggerFactory.getLogger(FeedBroker.class);
 
 	private JsonObject config;
 	private MongoClient mongo;
@@ -72,7 +72,7 @@ public class FeedBroker extends AbstractVerticle {
 		crit.put("subscriber_count", gt0);
 		mongo.find("feeds", crit, result -> {
 			if (result.failed()) {
-				log.error("Could not retrieve feed list from Mongo", result.cause());
+				LOG.error("Could not retrieve feed list from Mongo", result.cause());
 			} else {
 				this.readFeeds(result.result());
 			}
@@ -94,7 +94,7 @@ public class FeedBroker extends AbstractVerticle {
 		try {
 			url = new URL(feedUrl);
 		} catch (MalformedURLException mfe) {
-			log.warn("Invalid url : " + feedUrl, mfe);
+			LOG.warn("Invalid url : " + feedUrl, mfe);
 			future.fail(mfe);
 			return;
 		}
@@ -118,9 +118,9 @@ public class FeedBroker extends AbstractVerticle {
 		try {
 			SyndFeed feed = feedInput.build(xmlReader);
 			JsonObject feedJson = FeedUtils.toJson(feed);
-			log.info(feedJson);
+			LOG.info(feedJson);
 			List<JsonObject> jsonEntries = FeedUtils.toJson(feed.getEntries(), maxDate);
-			log.info("Insert " + jsonEntries.size() + " entries into Redis");
+			LOG.info("Insert " + jsonEntries.size() + " entries into Redis");
 			if (jsonEntries.isEmpty()) {
 				future.complete();
 				return;
@@ -128,14 +128,14 @@ public class FeedBroker extends AbstractVerticle {
 			vertx.eventBus().publish(feedId, new JsonArray(jsonEntries));
 			redis.insertEntries(feedId, jsonEntries, handler -> {
 				if (handler.failed()) {
-					log.error("Insert failed", handler.cause());
+					LOG.error("Insert failed", handler.cause());
 					future.fail(handler.cause());
 				} else {
 					future.complete();
 				}
 			});
 		} catch (FeedException fe) {
-			log.error("Exception while reading feed : " + url.toString(), fe);
+			LOG.error("Exception while reading feed : " + url.toString(), fe);
 			future.fail(fe);
 		}
 	}

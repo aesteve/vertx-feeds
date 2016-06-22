@@ -16,7 +16,7 @@ import java.util.List;
 
 public interface FeedUtils {
 
-	Logger log = LoggerFactory.getLogger(FeedUtils.class);
+	Logger LOG = LoggerFactory.getLogger(FeedUtils.class);
 	SimpleDateFormat isoDateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSX");
 
 	static JsonObject toJson(SyndFeed feed) {
@@ -41,7 +41,7 @@ public interface FeedUtils {
 				published = entry.getUpdatedDate();
 			}
 			if (maxDate == null || (published != null && published.compareTo(maxDate) > 0)) {
-				log.info("maxDate = " + maxDate);
+				LOG.info("maxDate = " + maxDate);
 				result.add(toJson(entry));
 			}
 		});
@@ -54,7 +54,7 @@ public interface FeedUtils {
 		Date published = entry.getPublishedDate();
 		if (published == null) {
 			// TODO : log warning ? use another date ?
-			log.warn("!!!!!! The RSS has no published date : this will lead to duplicates entry");
+			LOG.warn("!!!!!! The RSS has no published date : this will lead to duplicates entry");
 			published = new Date(); // FIXME : absolutely wrong...
 		}
 		json.put("published", toJson(published));
