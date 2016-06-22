@@ -21,6 +21,8 @@ import java.util.Optional;
 public class FeedsApi {
 
 	private static final Logger log = LoggerFactory.getLogger(FeedsApi.class);
+	public static final String COLUMN_SUBSCRIPTIONS = "subscriptions";
+	public static final String COLUMN_FEED_ID = "feedId";
 
 	private final MongoDAO mongo;
 	private final RedisDAO redis;
@@ -35,7 +37,7 @@ public class FeedsApi {
 	public void create(RoutingContext context) {
 		JsonObject body = context.getBodyAsJson();
 		JsonObject user = context.get("user");
-		JsonArray subscriptions = user.getJsonArray("subscriptions");
+		JsonArray subscriptions = user.getJsonArray(COLUMN_SUBSCRIPTIONS);
 		final String urlHash = strUtils.hash256(body.getString("url"));
 		body.put("hash", urlHash);
 		if (subscriptions != null) {
@@ -58,7 +60,7 @@ public class FeedsApi {
 
 	public void retrieve(RoutingContext context) {
 		HttpServerRequest request = context.request();
-		String feedId = request.getParam("feedId");
+		String feedId = request.getParam(COLUMN_FEED_ID);
 		if (feedId == null) {
 			context.fail(400);
 			return;
@@ -80,7 +82,7 @@ public class FeedsApi {
 		if (subscription == null) {
 			return;
 		}
-		String feedId = context.request().getParam("feedId");
+		String feedId = context.request().getParam(COLUMN_FEED_ID);
 		subscription.put("hash", feedId);
 		mongo.unsubscribe(user, subscription, result -> {
 			if (result.failed()) {
@@ -93,7 +95,7 @@ public class FeedsApi {
 
 	public void list(RoutingContext context) {
 		JsonObject user = context.get("user");
-		JsonArray subscriptions = user.getJsonArray("subscriptions");
+		JsonArray subscriptions = user.getJsonArray(COLUMN_SUBSCRIPTIONS);
 		if (subscriptions == null) {
 			subscriptions = new JsonArray();
 		}
@@ -105,7 +107,7 @@ public class FeedsApi {
 		JsonObject user = context.get("user");
 		JsonObject feed = getSubscription(user, context);
 		if (feed != null) {
-			String feedId = context.request().getParam("feedId");
+			String feedId = context.request().getParam(COLUMN_FEED_ID);
 			redis.getEntries(feedId, null, null, handler -> {
 				if (handler.failed()) {
 					context.fail(handler.cause());
@@ -123,12 +125,12 @@ public class FeedsApi {
 	}
 
 	private static JsonObject getSubscription(JsonObject user, RoutingContext context) {
-		String feedId = context.request().getParam("feedId");
+		String feedId = context.request().getParam(COLUMN_FEED_ID);
 		if (feedId == null) {
 			context.fail(400);
 			return null;
 		}
-		JsonArray subscriptions = user.getJsonArray("subscriptions");
+		JsonArray subscriptions = user.getJsonArray(COLUMN_SUBSCRIPTIONS);
 		if (subscriptions == null) {
 			context.fail(404);
 			return null;

@@ -29,6 +29,7 @@ import static io.vertx.core.http.HttpHeaders.CONTENT_TYPE;
 
 public class WebServer extends AbstractVerticle {
 
+	public static final String APPLICATION_JSON = "application/json";
 	private HttpServer server;
 
 	private AuthenticationApi authApi;
@@ -137,11 +138,11 @@ public class WebServer extends AbstractVerticle {
 		 * TODO : every page except login must be private TODO : use FormLoginHandler for the actual login form TODO : use RedirectAuthHandler for "/private"
 		 */
 		Router router = Router.router(vertx);
-		router.route().consumes("application/json");
-		router.route().produces("application/json");
+		router.route().consumes(APPLICATION_JSON);
+		router.route().produces(APPLICATION_JSON);
 		router.route().handler(BodyHandler.create());
 		router.route().handler(context -> {
-			context.response().headers().add(CONTENT_TYPE, "application/json");
+			context.response().headers().add(CONTENT_TYPE, APPLICATION_JSON);
 			context.next();
 		});
 
