@@ -126,7 +126,7 @@ public class WebServer extends AbstractVerticle {
 		router.getWithRegex(".+\\.hbs").handler(context -> {
 			final Session session = context.session();
 			context.data().put("userLogin", session.get("login")); /* in order to greet him */
-			context.data().put("accessToken", session.get("accessToken")); /* for api calls */
+			context.data().put("accessToken", session.get("access_token")); /* for api calls */
 			context.next();
 		});
 		router.getWithRegex(".+\\.hbs").handler(templateHandler);
