@@ -1,7 +1,7 @@
 {{#partial "scripts" }}
 {{/partial}}
 {{#partial "content" }}
-	<h2>Welcome to Vertx-Feeds !</h2>
+	<h3>Welcome to Vertx-Feeds !</h3>
 	<p>Vertx-Feeds is a very simple feed aggregator created to demonstrate how to build a complete application with Vert.x 3, Apex, MongoDB and Redis.</p>
 	<p>If you're interested (and you must be) by the source code, please have a look <a href="https://github.com/aesteve/vertx-feeds">at the GitHub repository</a></p>
 	{{#if userLogin}}
@@ -10,13 +10,43 @@
 	<p>If you just want to play with the project to understand how it works, feel free to <a href="/register.hbs">register</a> with whatever login/password you want.</p>
 	{{/if}}
 	<p>The project is written in Java 8, but work is in progress to translate it into other languages supported by Vert.x</p>
-	<p>Feel free to <a href="https://github.com/aesteve/vertx-feeds/issues/new">open an issue</a> if you find a bug, or ask a question on <a href="">Vert.x's Google Group</a></p>
+	{{!--<p>Feel free to <a href="https://github.com/aesteve/vertx-feeds/issues/new">open an issue</a> if you find a bug, or ask a question on <a href="">Vert.x's Google Group</a></p>
+	--}}
 	<p>List of technology used :</p>
-	<ul>
-		<li>Vert.x 3 - vertx-web</li>
-		<li>MongoDB - vertx-mongo-client</li>
-		<li>Redis - vertx-redis-client</li>
-		<li>SockJS eventbus bridge</li>
-	</ul>
+
+	<md-list layout="row"  layout-align="center center">
+		<md-list-item class="md-2-line"  >
+			<div class="md-list-item-text">
+			<h3>Vert.x 3</h3>
+			<p>vertx-web</p>
+			</div>
+		</md-list-item>
+
+		<md-list-item class="md-2-line">
+			<div class="md-list-item-text">
+			<h3>MongoDB</h3>
+			<p>vertx-mongo-client</p>
+			</div>
+		</md-list-item>
+		<md-list-item class="md-2-line">
+			<div class="md-list-item-text">
+			<h3>Redis</h3>
+			<p>vertx-redis-client</p>
+			</div>
+		</md-list-item>
+		<md-list-item class="md-2-line">
+			<div class="md-list-item-text">
+			<h3>SockJS</h3>
+			<p>eventbus bridge</p>
+			</div>
+		</md-list-item>
+	</md-list>
+
+	<md-content>
+		<div layout="row" layout-align="center center">
+		  <a class="md-raised md-primary md-cornered " href="https://github.com/aesteve/vertx-feeds/issues/new" md-button="md-button">Open an issue</a>
+		  <a class="button-secondary " href="" md-button="md-button">Vert.x's Google Group</a>
+		</div>
+	</md-content>
 {{/partial}}
 {{> templates/layout.hbs}}

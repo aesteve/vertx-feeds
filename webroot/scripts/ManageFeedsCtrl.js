@@ -4,11 +4,13 @@ vertxFeeds.controller('ManageFeedsCtrl', ['$scope', '$http', function($scope, $h
 			$scope.subscriptions = data;
 		});
 	};
+
 	$scope.addSubscription = function() {
 		$scope.pendingSubscription = {
-			url:'http://your.feed.here',
+			url:'', //http://your.feed.here
 			color:'#000000'
 		};
+
 	};
 	$scope.cancelPending = function() {
 		$scope.pendingSubscription = undefined;

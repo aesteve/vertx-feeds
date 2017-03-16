@@ -5,7 +5,7 @@ vertxFeeds.controller('NewsFeedCtrl', ['$scope', '$http', function($scope, $http
 		}
 		$scope.entries = entries.concat($scope.entries);
 		try {
-			$scope.$apply();
+//			$scope.$apply();
 		} catch(all) {}
 		console.log("Nb entries : " + $scope.entries.length);
 	};
@@ -16,13 +16,16 @@ vertxFeeds.controller('NewsFeedCtrl', ['$scope', '$http', function($scope, $http
 				var subscription = $scope.subscriptions[i];
 				console.log("register reader for : " + subscription.hash + " on the event bus");
 				eb.registerHandler(subscription.hash, function(entries){
+				console.log(entries);
 					addFeedEntries(entries, subscription);
 				});
 			}
 		};
 	};
 	var getFeedEntries = function(feed, callback) {
-		$http.get("/api/feeds/"+feed.hash+"/entries?accessToken="+userToken).success(function(data){
+	    console.log(feed);
+		$http.get("/api/feeds/"+feed.hash+"/entries?accessToken="+userToken).then(function(data){
+		console.log(data);
 			addFeedEntries(data, feed);
 			if (callback) {
 				callback();
@@ -30,7 +33,7 @@ vertxFeeds.controller('NewsFeedCtrl', ['$scope', '$http', function($scope, $http
 		});
 	};
 	var fetchFeeds = function() {
-		$http.get("/api/feeds?accessToken="+userToken).success(function(data){
+		$http.get("/api/feeds?accessToken="+userToken).then(function(data){
 			$scope.subscriptions = data;
 			for (var i=0; i<data.length; i++) {
 				var callback = undefined;

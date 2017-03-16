@@ -1,43 +1,50 @@
 <!DOCTYPE html>
 <html ng-app="vertxFeeds">
     <head>
-		<link rel="stylesheet" type="text/css" href="/assets/stylesheets/libs/foundation.min.css">
 		<link rel="stylesheet" type="text/css" href="/assets/stylesheets/main.css">
-		<script type="text/javascript">
-			window.userToken = "{{accessToken}}";
-		</script>
-		<script type="text/javascript" src="/assets/scripts/libs/angular.min.js"></script>
-		<script type="text/javascript" src="/assets/scripts/angular-interpolator-shim.js"></script>
-		{{#block "scripts" }}
-		{{/block}}
+        <link rel="stylesheet" href="http://ajax.googleapis.com/ajax/libs/angular_material/1.1.0/angular-material.min.css">
+		<link rel="stylesheet" href="https://code.getmdl.io/1.3.0/material.indigo-pink.min.css">
+		<link href="/assets/scripts/node_modules/md-color-picker/dist/mdColorPicker.min.css" rel="stylesheet" />
+		
     </head>
     <body>
-		<div id="main-menu">
-			<nav class="top-bar" data-topbar role="navigation">
-				<ul class="title-area">
-					<li class="name">
-						<h1><a href="/index.hbs" class="active">Vertx Feeds</a></h1>
-					</li>
-				</ul>
+		<md-toolbar class="md-hue-2" md-whiteframe="8">
+			<div class="md-toolbar-tools">
+				<h1><a href="/index.hbs" >Vertx Feeds</a></h1>
+				<span flex></span>
+					<a class="button-secondary " href="/login.hbs" md-button="md-button">
+						Log in
+					</a>
+			</div>
+			<header class="">
+				<a href="/private/news.hbs"  class="mdl-layout__tab">Feeds</a>
+				<a href="/private/manage.hbs" class="mdl-layout__tab">Subscriptions</a>
+			</header>
+		</md-toolbar>
 
-				<section class="top-bar-section">
-					<ul class="right">
-						{{#if userLogin}}
-						<li><a href="javascript:void(0)">Hello, {{userLogin}}</a></li>
-						{{else}}
-						<li><a href="/login.hbs">Log in</a></li>
-						{{/if}}
-					</ul>
-					<ul class="left">
-						<li><a href="/private/news.hbs">My news feed</a></li>
-						<li><a href="/private/manage.hbs">Manage subscriptions</a></li>
-					</ul>
-				</section>
-			</nav>
-		</div>
 		<section class="content">
 		{{#block "content" }}
 		{{/block}}
 		</section>
+
+		<script type="text/javascript">
+			window.userToken = "{{accessToken}}";
+		</script>
+		<script type="text/javascript" src="/assets/scripts/node_modules/angular/angular.min.js"></script>
+		
+        <script src="/assets/scripts/node_modules/angular-animate/angular-animate.min.js"></script>
+		<script src="/assets/scripts/node_modules/angular-aria/angular-aria.min.js"></script>
+		<script src="/assets/scripts/node_modules/angular-messages/angular-messages.min.js"></script>
+
+        <!-- Angular Material Library -->
+		<script src="/assets/scripts/node_modules/angular-material/angular-material.min.js"></script>
+
+		<script type="text/javascript" src="/assets/scripts/angular-interpolator-shim.js"></script>
+		
+		<script src="/assets/scripts/node_modules/tinycolor2/dist/tinycolor-min.js"></script>
+		<script src="/assets/scripts/node_modules/md-color-picker/dist/mdColorPicker.min.js"></script>
+		
+		{{#block "scripts" }}
+		{{/block}}
 	</body>
 </html>

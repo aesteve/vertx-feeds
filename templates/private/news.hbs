@@ -5,14 +5,17 @@
 <link rel="stylesheet" href="/assets/stylesheets/news.css" />
 {{/partial}}
 {{#partial "content" }}
-	<h2>News feed</h2>
-	<p>Here are the news aggregated from the feeds you subscribed to.</p>
+	<h3>News feed</h3>
+	
 	<div class="news-feed" ng-controller="NewsFeedCtrl">
+		<p ng-if="!entries.length">Here are the news aggregated from the feeds you subscribed to.</p>
 		<div class="entry" ng-repeat="entry in entries" style="{[{feedEntryStyle(entry)}]}">
 			<a href="{[{entry.link}]}" class="entry-title" ng-bind="entry.title"></a>
 			<div class="entry-description" ng-bind="entry.description"></div>
 			<div class="entry-pubdate" ng-bind="entry.published"></div>
+	{[{entry}]}
 		</div>
 	</div>
+
 {{/partial}}
 {{> templates/layout.hbs}}

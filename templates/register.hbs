@@ -1,7 +1,7 @@
 {{#partial "scripts" }}
 {{/partial}}
 {{#partial "content" }}
-	<h2>Login</h2>
+	{{!--<h2>Login</h2>
 	<form id="login-box" action="/api/register" method="POST">
 		<table>
 			<tr>
@@ -18,6 +18,41 @@
 			</tr>
 			
 		</table>
-	</form>
+	</form>--}}
+
+	<div class="form-ribbon"></div>
+	<main class="form-main" >
+		<div class="form-container ">
+			<div class="form-content mdl-color--white mdl-shadow--4dp content">
+				<div class="form-crumbs">
+					<a href="/index.hbs">Index</a> &gt; <a href="/login.hbs">Login</a> &gt; Register
+				</div>
+				<h2>Register</h2>
+					{{!--<p>
+						Cillum dolor esse sit incididunt velit eiusmod magna ad nostrud officia aute dolor dolor. Magna esse ullamco pariatur adipisicing consectetur eu commodo officia. Ex cillum consequat mollit minim elit est deserunt occaecat nisi amet. Quis aliqua nostrud Lorem occaecat sunt. Eiusmod quis amet ullamco aliquip dolore ut incididunt duis adipisicing. Elit consequat nisi eiusmod aute ipsum sunt veniam do est. Occaecat mollit aliquip ut proident consectetur amet ex dolore consectetur aliqua elit.
+					</p>--}}
+					<div layout="column">
+						<md-content layout-padding>
+							<form name="registerForm" action="/api/register" method="POST">
+								<div layout="row">
+									<md-input-container flex="50">
+										<label>Username</label>
+										<input tytpe="text" required name="username">
+									</md-input-container>
+
+									<md-input-container flex="50">
+										<label>Password</label>
+										<input type="password" required name="password">
+									</md-input-container>
+								</div>
+								<div layout="row" layout-align="center center">
+									<button type="submit" md-button="md-button" class="md-raised md-primary md-cornered" value="Create account">Create account</button>
+								</div>
+							</form>
+						</md-content>
+					</div>
+				</div>
+			</div>
+		</main>
 {{/partial}}
 {{> templates/layout.hbs}}
