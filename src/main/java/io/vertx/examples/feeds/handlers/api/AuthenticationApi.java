@@ -31,7 +31,7 @@ public class AuthenticationApi {
 			if (result.failed()) {
 				context.fail(result.cause());
 			} else {
-				redirectTo(context, INDEX);
+				redirectTo(context, "/login.hbs");
 			}
 		});
 	}
@@ -68,7 +68,7 @@ public class AuthenticationApi {
 			context.vertx().sharedData().getLocalMap("access_tokens").remove(accessToken);
 		}
 		session.remove(ACCESS_TOKEN);
-		redirectTo(context, INDEX);
+		redirectTo(context, "/login.hbs");
 	}
 
 	private static void redirectTo(RoutingContext context, String url) {

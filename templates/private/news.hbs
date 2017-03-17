@@ -7,15 +7,20 @@
 {{#partial "content" }}
 	<h3>News feed</h3>
 	
-	<div class="news-feed" ng-controller="NewsFeedCtrl">
-		<p ng-if="!entries.length">Here are the news aggregated from the feeds you subscribed to.</p>
-		<div class="entry" ng-repeat="entry in entries" style="{[{feedEntryStyle(entry)}]}">
-			<a href="{[{entry.link}]}" class="entry-title" ng-bind="entry.title"></a>
-			<div class="entry-description" ng-bind="entry.description"></div>
-			<div class="entry-pubdate" ng-bind="entry.published"></div>
-	{[{entry}]}
-		</div>
-	</div>
+	<md-content ng-controller="NewsFeedCtrl" layout="column">
+		<md-card class="feed" md-whiteframe="11" style="     margin: 10px 20%;
+			border-left: 10px solid {[{ entry.feed.color }]};" ng-repeat="entry in entries">
+			<md-card-content>
+				<a href="{[{entry.link}]}" target="_blank">
+					<h2 ng-bind="entry.title" class="title"></h2>
+				</a>
+				<p ng-bind="entry.description"></p>
+			</md-card-content>
+			<md-card-actions layout="row" layout-align="end center">
+				<span>{[{ entry.published.slice(0,-3) + 'Z' | date: "medium" }]}</span>
+			</md-card-actions>
+		</md-card>
+	</md-content>
 
 {{/partial}}
 {{> templates/layout.hbs}}

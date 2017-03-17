@@ -6,28 +6,7 @@
 		<link rel="stylesheet" href="https://code.getmdl.io/1.3.0/material.indigo-pink.min.css">
 		<link href="/assets/scripts/node_modules/md-color-picker/dist/mdColorPicker.min.css" rel="stylesheet" />
 		
-    </head>
-    <body>
-		<md-toolbar class="md-hue-2" md-whiteframe="8">
-			<div class="md-toolbar-tools">
-				<h1><a href="/index.hbs" >Vertx Feeds</a></h1>
-				<span flex></span>
-					<a class="button-secondary " href="/login.hbs" md-button="md-button">
-						Log in
-					</a>
-			</div>
-			<header class="">
-				<a href="/private/news.hbs"  class="mdl-layout__tab">Feeds</a>
-				<a href="/private/manage.hbs" class="mdl-layout__tab">Subscriptions</a>
-			</header>
-		</md-toolbar>
-
-		<section class="content">
-		{{#block "content" }}
-		{{/block}}
-		</section>
-
-		<script type="text/javascript">
+				<script type="text/javascript">
 			window.userToken = "{{accessToken}}";
 		</script>
 		<script type="text/javascript" src="/assets/scripts/node_modules/angular/angular.min.js"></script>
@@ -43,8 +22,34 @@
 		
 		<script src="/assets/scripts/node_modules/tinycolor2/dist/tinycolor-min.js"></script>
 		<script src="/assets/scripts/node_modules/md-color-picker/dist/mdColorPicker.min.js"></script>
-		
+		<script src="/assets/scripts/LoginCtrl.js"></script>
 		{{#block "scripts" }}
 		{{/block}}
+    </head>
+    <body>
+		<md-toolbar class="md-hue-2" md-whiteframe="8" ng-controller="LoginCtrl">
+			<div class="md-toolbar-tools">
+				<h1><a href="/index.hbs" >Vertx Feeds</a></h1>
+				<span flex></span>
+				<button ng-if="token" class="button-secondary" ng-click="logout()" md-button="md-button">
+					Log out
+				</button>
+				{[{test}]}
+				<a ng-if="!token" class="button-secondary " href="/login.hbs" md-button="md-button">
+					Log in
+				</a>
+			</div>
+			<header class="">
+				<a href="/private/news.hbs"  class="mdl-layout__tab">Feeds</a>
+				<a href="/private/manage.hbs" class="mdl-layout__tab">Subscriptions</a>
+			</header>
+		</md-toolbar>
+
+		<section class="content">
+		{{#block "content" }}
+		{{/block}}
+		</section>
+
+
 	</body>
 </html>
