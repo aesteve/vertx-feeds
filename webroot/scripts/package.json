@@ -9,6 +9,7 @@
     "angular-aria": "~1.5.5",
     "angular-material": "^1.1.3",
     "angular-messages": "~1.5.5",
+    "material-design-icons": "^3.0.1",
     "md-color-picker": "^0.2.6"
   },
   "devDependencies": {},
