@@ -3,7 +3,7 @@
     display: block;
     right: 0;
     top: 0;
-    margin-right: 50px;
+    margin-right: 20%;
     margin-top: 85px;
     z-index: 900;
 }
@@ -16,5 +16,5 @@
     height: 50px; 
 }
 .subscription .title {
-    font-size: 2.8em;
+    font-size: 1.8em;
 }

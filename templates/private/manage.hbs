@@ -12,11 +12,13 @@
 				<h2>Feed Form</h2>
 				<form name="addFeedForm" ng-submit="savePending()" >
 					<div layout="row">
-						<md-input-container flex="50">
+						<md-input-container flex="100">
 							<label>URL</label>
 							<input type="url" name="url" ng-model="pendingSubscription.url" placeholder="http://your.feed.here" required>
 						</md-input-container>
-						<div md-color-picker ng-model="pendingSubscription.color" label="Choose a color" required></div>
+					</div>
+					<div layout="row">
+						<div flex="100" md-color-picker ng-model="pendingSubscription.color" label="Choose a color" required></div>
 					</div>
 					<div layout="row" layout-align="center center">
 						<button type="submit" md-button="md-button" class="md-raised md-primary md-cornered">Save</button>

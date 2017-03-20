@@ -1,7 +1,7 @@
 {{#partial "scripts" }}
 {{/partial}}
 {{#partial "content" }}
-<div class="form-ribbon"></div>
+<div class="form-ribbon" flex-offset="15" flex="70"></div>
 <main class="form-main" >
 	<div class="form-container ">
 		<div class="form-content mdl-color--white mdl-shadow--4dp content">
@@ -13,12 +13,13 @@
 					<md-content layout-padding>
 						<form name="registerForm" action="/api/register" method="POST">
 							<div layout="row">
-								<md-input-container flex="50">
+								<md-input-container flex="100">
 									<label>Username</label>
 									<input tytpe="text" required name="username">
 								</md-input-container>
-
-								<md-input-container flex="50">
+							</div>
+							<div layout="row">
+								<md-input-container flex="100">
 									<label>Password</label>
 									<input type="password" required name="password">
 								</md-input-container>

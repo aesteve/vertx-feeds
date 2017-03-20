@@ -8,8 +8,8 @@
 	<h3>News feed</h3>
 	
 	<md-content ng-controller="NewsFeedCtrl" layout="column">
-		<md-card class="feed" md-whiteframe="11" style="     margin: 10px 20%;
-			border-left: 10px solid {[{ entry.feed.color }]};" ng-repeat="entry in entries">
+		<md-card class="feed" md-whiteframe="11" style="margin: 10px 20%; border-left: 10px solid {[{ entry.feed.color }]};"
+		ng-repeat="entry in entries">
 			<md-card-content>
 				<a href="{[{entry.link}]}" target="_blank">
 					<h2 ng-bind="entry.title" class="title"></h2>
@@ -21,6 +21,5 @@
 			</md-card-actions>
 		</md-card>
 	</md-content>
-
 {{/partial}}
 {{> templates/layout.hbs}}

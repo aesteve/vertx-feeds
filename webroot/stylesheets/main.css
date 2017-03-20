@@ -1,23 +1,4 @@
-/*form*/
-.form-ribbon {
-  width: 100%;
-  height: 30vh;
-  background-color: #3F51B5;
-}
-
-.form-main {
-  margin-top: -25vh;
-  width: 100%;
-}
-
-.form-content {
-  border-radius: 2px;
-  padding: 40px 26px;
-  margin-bottom: 80px;
-  width: 65%;
-  margin: auto;
-}
-
+/*font*/
 @font-face {
   font-family: 'Material Icons';
   font-style: normal;
@@ -54,4 +35,27 @@
 
   /* Support for IE. */
   font-feature-settings: 'liga';
+}
+
+/*form*/
+.form-ribbon {
+  /*width: 100%;*/
+  height: 30vh;
+  background-color: #3F51B5;
+}
+
+.form-main {
+  margin-top: -25vh;
+  width: 100%;
+}
+
+.form-content {
+  border-radius: 2px;
+  padding: 40px 26px;
+  margin-bottom: 80px;
+  width: 45%;
+  margin: auto;
+}
+a {
+  text-decoration: none;
 }

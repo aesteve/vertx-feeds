@@ -4,9 +4,6 @@ vertxFeeds.controller('NewsFeedCtrl', ['$scope', '$http', function($scope, $http
 			entries[i].feed = subscription;
 		}
 		$scope.entries = entries.concat($scope.entries);
-		try {
-//			$scope.$apply();
-		} catch(all) {}
 		console.log("Nb entries : " + $scope.entries.length);
 	};
 	var connectToEventBus = function () {
@@ -16,16 +13,15 @@ vertxFeeds.controller('NewsFeedCtrl', ['$scope', '$http', function($scope, $http
 				var subscription = $scope.subscriptions[i];
 				console.log("register reader for : " + subscription.hash + " on the event bus");
 				eb.registerHandler(subscription.hash, function(entries){
-				console.log(entries);
+					console.log(entries);
 					addFeedEntries(entries, subscription);
 				});
 			}
 		};
 	};
 	var getFeedEntries = function(feed, callback) {
-	    console.log(feed);
 		$http.get("/api/feeds/"+feed.hash+"/entries?accessToken="+userToken).then(function(data){
-		console.log(data);
+		data = data.data;
 			addFeedEntries(data, feed);
 			if (callback) {
 				callback();
@@ -34,6 +30,7 @@ vertxFeeds.controller('NewsFeedCtrl', ['$scope', '$http', function($scope, $http
 	};
 	var fetchFeeds = function() {
 		$http.get("/api/feeds?accessToken="+userToken).then(function(data){
+			var data = data.data
 			$scope.subscriptions = data;
 			for (var i=0; i<data.length; i++) {
 				var callback = undefined;
@@ -43,11 +40,6 @@ vertxFeeds.controller('NewsFeedCtrl', ['$scope', '$http', function($scope, $http
 				getFeedEntries(data[i], callback);
 			}
 		});
-	};
-	$scope.feedEntryStyle = function(entry) {
-		var color = entry.feed.color;
-		var style = "border-color:"+color+";";
-		return style;
 	};
 	$scope.entries = [];
 	fetchFeeds();
