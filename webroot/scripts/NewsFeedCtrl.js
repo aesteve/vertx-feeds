@@ -13,7 +13,6 @@ vertxFeeds.controller('NewsFeedCtrl', ['$scope', '$http', function($scope, $http
 				var subscription = $scope.subscriptions[i];
 				console.log("register reader for : " + subscription.hash + " on the event bus");
 				eb.registerHandler(subscription.hash, function(entries){
-					console.log(entries);
 					addFeedEntries(entries, subscription);
 				});
 			}

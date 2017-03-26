@@ -19,6 +19,9 @@
 	text-align: right;
 }
 
+.feed {
+	margin: 10px 8%;
+}
 .feed .title {
     font-size: 1.8em;
 }

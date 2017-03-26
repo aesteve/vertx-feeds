@@ -68,7 +68,7 @@ public class AuthenticationApi {
 			context.vertx().sharedData().getLocalMap("access_tokens").remove(accessToken);
 		}
 		session.remove(ACCESS_TOKEN);
-		redirectTo(context, "/login.hbs");
+		redirectTo(context, "/index.hbs");
 	}
 
 	private static void redirectTo(RoutingContext context, String url) {
