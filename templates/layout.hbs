@@ -1,43 +1,57 @@
 <!DOCTYPE html>
 <html ng-app="vertxFeeds">
     <head>
-		<link rel="stylesheet" type="text/css" href="/assets/stylesheets/libs/foundation.min.css">
 		<link rel="stylesheet" type="text/css" href="/assets/stylesheets/main.css">
+        <link rel="stylesheet" href="/assets/stylesheets/libs/angular-material.min.css">
+		<link rel="stylesheet" href="/assets/stylesheets/libs/material.indigo-pink.min.css">
+		<link href="/assets/stylesheets/libs/mdColorPicker.min.css" rel="stylesheet" />
+		
 		<script type="text/javascript">
 			window.userToken = "{{accessToken}}";
 		</script>
+		
 		<script type="text/javascript" src="/assets/scripts/libs/angular.min.js"></script>
+		
+        <script src="/assets/scripts/libs/angular-animate.min.js"></script>
+		<script src="/assets/scripts/libs/angular-aria.min.js"></script>
+		<script src="/assets/scripts/libs/angular-messages.min.js"></script>
+
+        <!-- Angular Material Library -->
+		<script src="/assets/scripts/libs/angular-material.min.js"></script>
+		
 		<script type="text/javascript" src="/assets/scripts/angular-interpolator-shim.js"></script>
+		
+		<script src="/assets/scripts/libs/tinycolor.min.js"></script>
+		<script src="/assets/scripts/libs/mdColorPicker.min.js"></script>
+		
+		<script src="/assets/scripts/LoginCtrl.js"></script>
 		{{#block "scripts" }}
 		{{/block}}
     </head>
     <body>
-		<div id="main-menu">
-			<nav class="top-bar" data-topbar role="navigation">
-				<ul class="title-area">
-					<li class="name">
-						<h1><a href="/index.hbs" class="active">Vertx Feeds</a></h1>
-					</li>
-				</ul>
+		<md-toolbar flex-offset="15" flex="70" class="md-hue-2" md-whiteframe="8" ng-controller="LoginCtrl">
+			<div class="md-toolbar-tools">
+				<h1><a href="/index.hbs" >Vertx Feeds</a></h1>
+				<span flex></span>
+				<button ng-if="token" class="button-secondary" ng-click="logout()" md-button="md-button">
+					Log out
+				</button>
+				{[{test}]}
+				<a ng-if="!token" class="button-secondary " href="/login.hbs" md-button="md-button">
+					Log in
+				</a>
+			</div>
+			<header class="">
+				<a href="/private/news.hbs"  class="mdl-layout__tab">Feeds</a>
+				<a href="/private/manage.hbs" class="mdl-layout__tab">Subscriptions</a>
+			</header>
+		</md-toolbar>
 
-				<section class="top-bar-section">
-					<ul class="right">
-						{{#if userLogin}}
-						<li><a href="javascript:void(0)">Hello, {{userLogin}}</a></li>
-						{{else}}
-						<li><a href="/login.hbs">Log in</a></li>
-						{{/if}}
-					</ul>
-					<ul class="left">
-						<li><a href="/private/news.hbs">My news feed</a></li>
-						<li><a href="/private/manage.hbs">Manage subscriptions</a></li>
-					</ul>
-				</section>
-			</nav>
-		</div>
-		<section class="content">
+		<section class="content" flex-offset="15" flex="70">
 		{{#block "content" }}
 		{{/block}}
 		</section>
+
+
 	</body>
 </html>

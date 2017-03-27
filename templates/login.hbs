@@ -1,23 +1,37 @@
 {{#partial "scripts" }}
 {{/partial}}
 {{#partial "content" }}
-	<h2>Login</h2>
-	<form id="login-box" action="/api/login" method="POST">
-		<table>
-			<tr>
-				<td>Login</td>
-				<td><input name="login" type="text" /></td>
-			</tr>
-			<tr>
-				<td>Password</td>
-				<td><input name="password" type="password" /></td>
-			</tr>
-			<tr>
-				<td><input type="submit" class="button" value="Log in" /></td>
-				<td><a href="/register.hbs">Or create an account</a></td>
-			</tr>
-			
-		</table>
-	</form>
+	 <div class="form-ribbon" flex-offset="15" flex="70"></div>
+      <main class="form-main">
+        <div class="form-container">
+          <div class="form-content mdl-color--white mdl-shadow--4dp ">
+            <div class="form-crumbs">
+              <a href="#/index.hbs">Index</a> &gt; Login
+            </div>
+            <h2>Login</h2>
+			<div layout="column">
+				<md-content layout-padding>
+					<form name="loginForm" action="/api/login" method="POST">
+						<div layout="row">
+							<md-input-container flex="100">
+								<label>Username</label>
+								<input tytpe="text" required name="username">
+							</md-input-container>
+						</div>
+						<div layout="row">
+							<md-input-container flex="100">
+								<label>Password</label>
+								<input type="password" required name="password">
+							</md-input-container>
+						</div>
+						<div layout="row" layout-align="center center">
+							<button type="submit" md-button="md-button" class="md-raised md-primary md-cornered" value="Log in">Log in</button>
+							<a class="button-secondary " href="/register.hbs" md-button="md-button">Or create an account</a>
+						</div>
+					</form>
+				</md-content>
+				</div>
+			</div>
+		</main>
 {{/partial}}
 {{> templates/layout.hbs}}

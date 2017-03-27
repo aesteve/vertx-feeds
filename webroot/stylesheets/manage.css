@@ -1,0 +1,20 @@
+.add_button {
+    position: absolute;
+    display: block;
+    right: 0;
+    top: 0;
+    margin-right: 20%;
+    margin-top: 85px;
+    z-index: 900;
+}
+.subscription {
+    margin: 10px 8%;
+}
+.subscription .color_choice {
+    float: right;
+    width: 50px;
+    height: 50px; 
+}
+.subscription .title {
+    font-size: 1.8em;
+}
