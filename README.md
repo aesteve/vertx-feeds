@@ -1,6 +1,7 @@
 ## Feed aggregator using Vert.x 3 and Vertx-web.
 
 [![StackShare](https://img.shields.io/badge/tech-stack-0690fa.svg?style=flat)](https://stackshare.io/aesteve/vertx-feeds)
+[![Travis](https://img.shields.io/travis/aesteve/vertx-feeds.svg)](https://travis-ci.org/aesteve/vertx-feeds)
 
 This project is designed to show what a real-life application can look like with Vert.x.
 
