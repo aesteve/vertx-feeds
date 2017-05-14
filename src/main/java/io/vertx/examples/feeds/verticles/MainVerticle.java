@@ -1,16 +1,11 @@
 package io.vertx.examples.feeds.verticles;
 
-import io.vertx.core.AbstractVerticle;
-import io.vertx.core.Context;
-import io.vertx.core.DeploymentOptions;
-import io.vertx.core.Future;
-import io.vertx.core.Handler;
-import io.vertx.core.Vertx;
+import io.vertx.core.*;
 import io.vertx.core.json.JsonObject;
-import io.vertx.examples.feeds.utils.async.MultipleFutures;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * Main verticle, orchestrate the instanciation of other verticles
@@ -30,50 +25,29 @@ public class MainVerticle extends AbstractVerticle {
 
 	@Override
 	public void start(Future<Void> future) {
-		deployEmbeddedDbs(future, this::deployFeedBroker);
+		CompositeFuture
+				.all(deployEmbeddedMongo(), deployEmbeddedRedis(), deployFeedBroker())
+				.setHandler(future.<CompositeFuture>map(res -> null).completer());
 	}
 
-	private void deployEmbeddedDbs(Future<Void> future, Handler<Future<Void>> whatsNext) {
-		MultipleFutures dbDeployments = new MultipleFutures();
-		dbDeployments.add(this::deployEmbeddedRedis);
-		dbDeployments.add(this::deployEmbeddedMongo);
-		dbDeployments.setHandler(result -> {
-			if (result.failed()) {
-				future.fail(result.cause());
-			} else {
-				whatsNext.handle(future);
-			}
-		});
-		dbDeployments.start();
-	}
-
-	private void deployEmbeddedRedis(Future<Void> future) {
+	private Future<String> deployEmbeddedRedis() {
+		Future<String> f = Future.future();
 		DeploymentOptions options = new DeploymentOptions();
 		options.setWorker(true);
-		vertx.deployVerticle(EmbeddedRedis.class.getName(), options, result -> {
-			if (result.failed()) {
-				future.fail(result.cause());
-			} else {
-				deploymentIds.add(result.result());
-				future.complete();
-			}
-		});
+		vertx.deployVerticle(EmbeddedRedis.class.getName(), options, f);
+		return f;
 	}
 
-	private void deployEmbeddedMongo(Future<Void> future) {
+	private Future<String> deployEmbeddedMongo() {
+		Future<String> f = Future.future();
 		DeploymentOptions options = new DeploymentOptions();
 		options.setWorker(true);
-		vertx.deployVerticle(EmbeddedMongo.class.getName(), options, result -> {
-			if (result.failed()) {
-				future.fail(result.cause());
-			} else {
-				deploymentIds.add(result.result());
-				future.complete();
-			}
-		});
+		vertx.deployVerticle(EmbeddedMongo.class.getName(), options, f);
+		return f;
 	}
 
-	private void deployFeedBroker(Future<Void> future) {
+	private Future<String> deployFeedBroker() {
+		Future<String> future = Future.future();
 		JsonObject dbConfig = new JsonObject();
 		dbConfig.put("redis", redisConfig());
 		dbConfig.put("mongo", mongoConfig());
@@ -91,21 +65,27 @@ public class MainVerticle extends AbstractVerticle {
 						future.fail(serverResult.cause());
 					} else {
 						deploymentIds.add(serverResult.result());
-						future.complete();
+						future.complete(serverResult.result());
 					}
 				});
 			}
 		});
+		return future;
 	}
 
 	@Override
 	public void stop(Future<Void> future) {
-		MultipleFutures futures = new MultipleFutures(future);
-		deploymentIds.forEach(deploymentId -> futures.add(fut -> undeploy(deploymentId, fut)));
-		futures.start();
+		CompositeFuture.all(
+			deploymentIds
+					.stream()
+					.map(this::undeploy)
+					.collect(Collectors.toList())
+		).setHandler(future.<CompositeFuture>map(c -> null).completer());
+
 	}
 
-	private void undeploy(String deploymentId, Future<Void> future) {
+	private Future<Void> undeploy(String deploymentId) {
+		Future<Void> future = Future.future();
 		vertx.undeploy(deploymentId, res -> {
 			if (res.succeeded()) {
 				future.complete();
@@ -113,6 +93,7 @@ public class MainVerticle extends AbstractVerticle {
 				future.fail(res.cause());
 			}
 		});
+		return future;
 	}
 
 	private static JsonObject mongoConfig() {

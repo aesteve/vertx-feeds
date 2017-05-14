@@ -15,7 +15,6 @@ import io.vertx.core.logging.Logger;
 import io.vertx.core.logging.LoggerFactory;
 import io.vertx.examples.feeds.dao.RedisDAO;
 import io.vertx.examples.feeds.utils.RedisUtils;
-import io.vertx.examples.feeds.utils.async.MultipleFutures;
 import io.vertx.examples.feeds.utils.rss.FeedUtils;
 import io.vertx.ext.mongo.MongoClient;
 import io.vertx.redis.RedisClient;
@@ -27,6 +26,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 public class FeedBroker extends AbstractVerticle {
 
@@ -80,14 +80,14 @@ public class FeedBroker extends AbstractVerticle {
 	}
 
 	private void readFeeds(List<JsonObject> feeds) {
-		MultipleFutures fetchFeedsFuture = new MultipleFutures();
-		feeds.forEach(feed -> fetchFeedsFuture.add(feedFuture -> readFeed(feed, feedFuture)));
-		/* No matter if failed or succeeded -> re-launch periodically */
-		fetchFeedsFuture.setHandler(fetchResult -> timerId = vertx.setTimer(POLL_PERIOD, timerIdentifier -> fetchFeeds()));
-		fetchFeedsFuture.start();
+		CompositeFuture.all(
+				feeds.stream().map(this::readFeed)
+						.collect(Collectors.toList())
+		).setHandler(fetchResult -> timerId = vertx.setTimer(POLL_PERIOD, timerIdentifier -> fetchFeeds()));
 	}
 
-	private void readFeed(JsonObject jsonFeed, Future<Void> future) {
+	private Future<Void> readFeed(JsonObject jsonFeed) {
+		Future<Void> future = Future.future();
 		String feedUrl = jsonFeed.getString("url");
 		String feedId = jsonFeed.getString("hash");
 		URL url;
@@ -95,20 +95,20 @@ public class FeedBroker extends AbstractVerticle {
 			url = new URL(feedUrl);
 		} catch (MalformedURLException mfe) {
 			LOG.warn("Invalid url : " + feedUrl, mfe);
-			future.fail(mfe);
-			return;
+			return Future.failedFuture(mfe);
 		}
 
 		redis.getMaxDate(feedId, maxDate -> getXML(url, response -> {
-      int status = response.statusCode();
-      if (status < 200 || status >= 300) {
-        if (future != null) {
-          future.fail(new RuntimeException("Could not read feed " + feedUrl + ". Response status code : " + status));
-        }
-        return;
-      }
-      response.bodyHandler(buffer -> this.parseXmlFeed(buffer, maxDate, url, feedId, future));
-    }));
+		int status = response.statusCode();
+		if (status < 200 || status >= 300) {
+			if (future != null) {
+				future.fail(new RuntimeException("Could not read feed " + feedUrl + ". Response status code : " + status));
+			}
+				return;
+			}
+			response.bodyHandler(buffer -> this.parseXmlFeed(buffer, maxDate, url, feedId, future));
+		}));
+		return future;
 	}
 
 	private void parseXmlFeed(Buffer buffer, Date maxDate, URL url, String feedId, Future<Void> future) {
