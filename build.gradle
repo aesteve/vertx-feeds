@@ -1,10 +1,14 @@
-plugins {
-	id 'java'
-	id 'eclipse'
-	id 'idea'
-	id 'application'
-	id 'com.github.johnrengelman.shadow' version '2.0.0'
+buildscript {
+	// Gradle plugins
+	dependencies {
+		classpath 'com.github.jengelman.gradle.plugins:shadow:2.0.1'
+		classpath "com.github.maiflai:gradle-scalatest:0.17"
+	}
 }
+apply plugin: 'java'
+apply plugin: 'application'
+apply plugin: 'com.github.johnrengelman.shadow'
+
 
 repositories {
 	mavenCentral()
