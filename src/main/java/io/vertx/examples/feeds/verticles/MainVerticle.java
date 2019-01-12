@@ -12,7 +12,7 @@ import java.util.stream.Collectors;
  */
 public class MainVerticle extends AbstractVerticle {
 
-	public static final int REDIS_PORT = 8888;
+	public static final int REDIS_PORT = 7878;
 	public static final int MONGO_PORT = 8889;
 
 	private List<String> deploymentIds;
@@ -26,8 +26,14 @@ public class MainVerticle extends AbstractVerticle {
 	@Override
 	public void start(Future<Void> future) {
 		CompositeFuture
-				.all(deployEmbeddedMongo(), deployEmbeddedRedis(), deployFeedBroker())
-				.setHandler(future.<CompositeFuture>map(res -> null).completer());
+				.all(deployEmbeddedMongo(), deployEmbeddedRedis())
+				.setHandler(res -> {
+					if (res.failed()) {
+						future.fail(res.cause());
+						return;
+					}
+					deployFeedBroker().setHandler(future.map(v -> "").completer());
+				});
 	}
 
 	private Future<String> deployEmbeddedRedis() {
@@ -109,5 +115,10 @@ public class MainVerticle extends AbstractVerticle {
 		config.put("host", "localhost");
 		config.put("port", REDIS_PORT);
 		return config;
+	}
+
+	public static void main(String... args) {
+		Vertx v = Vertx.vertx();
+		v.deployVerticle(MainVerticle.class.getName());
 	}
 }

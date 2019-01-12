@@ -13,16 +13,16 @@ import io.vertx.examples.feeds.handlers.UserContextHandler;
 import io.vertx.examples.feeds.handlers.api.AuthenticationApi;
 import io.vertx.examples.feeds.handlers.api.FeedsApi;
 import io.vertx.examples.feeds.utils.RedisUtils;
+import io.vertx.ext.bridge.PermittedOptions;
 import io.vertx.ext.mongo.MongoClient;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.Session;
 import io.vertx.ext.web.handler.*;
 import io.vertx.ext.web.handler.sockjs.BridgeOptions;
-import io.vertx.ext.web.handler.sockjs.PermittedOptions;
 import io.vertx.ext.web.handler.sockjs.SockJSHandler;
 import io.vertx.ext.web.sstore.LocalSessionStore;
 import io.vertx.ext.web.sstore.SessionStore;
-import io.vertx.ext.web.templ.HandlebarsTemplateEngine;
+import io.vertx.ext.web.templ.handlebars.HandlebarsTemplateEngine;
 import io.vertx.redis.RedisClient;
 
 import static io.vertx.core.http.HttpHeaders.CONTENT_TYPE;
@@ -51,7 +51,7 @@ public class WebServer extends AbstractVerticle {
 		authApi = new AuthenticationApi(mongo);
 		feedsApi = new FeedsApi(mongo, redis);
 		server = vertx.createHttpServer(createOptions());
-		server.requestHandler(createRouter()::accept);
+		server.requestHandler(createRouter());
 		server.listen(result -> {
 			if (result.succeeded()) {
 				future.complete();
@@ -119,7 +119,7 @@ public class WebServer extends AbstractVerticle {
 	}
 
 	private void dynamicPages(Router router) {
-		HandlebarsTemplateEngine hbsEngine = HandlebarsTemplateEngine.create();
+		HandlebarsTemplateEngine hbsEngine = HandlebarsTemplateEngine.create(vertx);
 		hbsEngine.setMaxCacheSize(0); /* no cache since we wan't hot-reload for templates */
 		TemplateHandler templateHandler = TemplateHandler.create(hbsEngine);
 		router.get("/private/*").handler(userContextHandler::fromSession);

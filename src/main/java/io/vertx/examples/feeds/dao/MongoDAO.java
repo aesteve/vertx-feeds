@@ -5,6 +5,7 @@ import io.vertx.core.Handler;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.mongo.MongoClient;
+import io.vertx.ext.mongo.MongoClientUpdateResult;
 
 import java.util.List;
 
@@ -47,12 +48,12 @@ public class MongoDAO {
 		mongo.findOne(TABLE_FEEDS, query, null, handler);
 	}
 
-	public void updateFeed(String feedHash, JsonObject newValue, Handler<AsyncResult<Void>> handler) {
+	public void updateFeed(String feedHash, JsonObject newValue, Handler<AsyncResult<MongoClientUpdateResult>> handler) {
 		JsonObject query = new JsonObject();
 		query.put("hash", feedHash);
 		JsonObject updateQuery = new JsonObject();
 		updateQuery.put("$set", newValue);
-		mongo.update(TABLE_FEEDS, query, updateQuery, handler);
+		mongo.updateCollection(TABLE_FEEDS, query, updateQuery, handler);
 	}
 
 	@SuppressWarnings("unchecked")
@@ -65,7 +66,7 @@ public class MongoDAO {
 		newSubscriptions.put("$set", new JsonObject().put(COLUMN_SUBSCRIPTIONS, new JsonArray(subscriptions)));
 		JsonObject userQuery = new JsonObject();
 		userQuery.put("_id", user.getString("_id"));
-		mongo.update(TABLE_USERS, userQuery, newSubscriptions, updateHandler -> {
+		mongo.findOneAndUpdate(TABLE_USERS, userQuery, newSubscriptions, updateHandler -> {
 			if (updateHandler.failed()) {
 				handler.handle(updateHandler);
 				return;
@@ -118,7 +119,7 @@ public class MongoDAO {
 				subscription.put("_id", existingFeed.getString("_id"));
 				JsonObject updateValue = new JsonObject();
 				updateValue.put("$set", subscription);
-				mongo.update(TABLE_FEEDS, updateQuery, updateValue, updateHandler -> {
+				mongo.findOneAndUpdate(TABLE_FEEDS, updateQuery, updateValue, updateHandler -> {
 					if (updateHandler.failed()) {
 						handler.handle(updateHandler);
 						return;
@@ -136,7 +137,7 @@ public class MongoDAO {
 		query.put("_id", user.getString("_id"));
 		JsonObject newSubscriptions = new JsonObject();
 		newSubscriptions.put("$set", new JsonObject().put(COLUMN_SUBSCRIPTIONS, subscriptions));
-		mongo.update(TABLE_USERS, query, newSubscriptions, handler::handle);
+		mongo.findOneAndUpdate(TABLE_USERS, query, newSubscriptions, handler::handle);
 	}
 
 }

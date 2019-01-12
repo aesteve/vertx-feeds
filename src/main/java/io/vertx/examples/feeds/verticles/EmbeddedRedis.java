@@ -2,10 +2,8 @@ package io.vertx.examples.feeds.verticles;
 
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Future;
-
-import java.io.IOException;
-
 import redis.embedded.RedisServer;
+
 
 public class EmbeddedRedis extends AbstractVerticle {
 	private RedisServer server;
@@ -16,8 +14,8 @@ public class EmbeddedRedis extends AbstractVerticle {
 			server = new RedisServer(MainVerticle.REDIS_PORT);
 			server.start(); // seems to be blocking
 			future.complete();
-		} catch (IOException ioe) {
-			future.fail(ioe);
+		} catch (Exception e) {
+			future.fail(e);
 		}
 	}
 
