@@ -1,19 +1,17 @@
-import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
-
-val vertxVersion = "3.6.2"
+val vertxVersion = "4.0.0-milestone4"
 val mainVerticle = "io.vertx.examples.feeds.verticles.MainVerticle"
 
 buildscript {
 	// Gradle plugins
 	dependencies {
-		classpath("com.github.jengelman.gradle.plugins:shadow:4.0.2") // FatJar packaging
+		classpath("com.github.jengelman.gradle.plugins:shadow:5.2.0") // FatJar packaging
 	}
 }
 
 plugins {
 	java
 	application
-	id("com.github.johnrengelman.shadow") version "4.0.2"
+	id("com.github.johnrengelman.shadow") version "5.2.0"
 }
 
 repositories {
@@ -24,58 +22,62 @@ group = "com.github.aesteve"
 version = ""
 
 tasks.withType<JavaCompile> {
-	sourceCompatibility = "1.8"
+	sourceCompatibility = JavaVersion.VERSION_14.toString()
+    targetCompatibility = JavaVersion.VERSION_14.toString()
 }
 
 
 dependencies {
 	
 	// Vert.x standard
-	compile("io.vertx:vertx-core:$vertxVersion")
-	compile("io.vertx:vertx-web:$vertxVersion")
+	implementation("io.vertx:vertx-core:$vertxVersion")
+	implementation("io.vertx:vertx-web:$vertxVersion")
+    implementation("io.vertx:vertx-web-client:$vertxVersion")
 	
 	// MongoDB
-	compile("io.vertx:vertx-mongo-client:$vertxVersion")
-	compile("de.flapdoodle.embed:de.flapdoodle.embed.mongo:2.2.0")
+	implementation("io.vertx:vertx-mongo-client:$vertxVersion")
+	implementation("de.flapdoodle.embed:de.flapdoodle.embed.mongo:2.2.0")
 	// Redis
-	compile("io.vertx:vertx-redis-client:$vertxVersion")
-	compile("it.ozimov:embedded-redis:0.7.2")
+	implementation("io.vertx:vertx-redis-client:$vertxVersion")
+	implementation("it.ozimov:embedded-redis:0.7.2")
 
 
 	// Handlebars
-	compile("io.vertx:vertx-web-templ-handlebars:$vertxVersion")
-	compile("com.github.jknack:handlebars:2.1.0")
+	implementation("io.vertx:vertx-web-templ-handlebars:$vertxVersion")
+	implementation("com.github.jknack:handlebars:2.1.0")
 	
 	// RSS
-	compile("com.rometools:rome:1.5.0")
+	implementation("com.rometools:rome:1.12.2")
+
+
+    runtimeOnly("ch.qos.logback:logback-classic:1.2.3")
 }
 
 application {
 	mainClassName = "io.vertx.core.Launcher"
-
 }
 
 
-tasks.shadowJar {
-	classifier = ""
-	manifest {
-		attributes["Main-Verticle"] = "io.vertx.examples.feeds.verticles.MainVerticle"
-	}
-	mergeServiceFiles {
-		include("META-INF/services/io.vertx.core.spi.VerticleFactory")
-	}
-	into("webroot") {
-		from("webroot")
-	}
-	into("templates") {
-		from("templates")
-	}
-}
-
-tasks.withType<JavaExec> {
-	args = listOf("run", mainVerticle)
-}
-
-tasks.withType<Wrapper> {
-	gradleVersion = "5.1.1"
+tasks {
+    shadowJar {
+        archiveClassifier.set("")
+        manifest {
+            attributes["Main-Verticle"] = "io.vertx.examples.feeds.verticles.MainVerticle"
+        }
+        mergeServiceFiles {
+            include("META-INF/services/io.vertx.core.spi.VerticleFactory")
+        }
+        into("webroot") {
+            from("webroot")
+        }
+        into("templates") {
+            from("templates")
+        }
+    }
+    withType<JavaExec> {
+        args = listOf("run", mainVerticle)
+    }
+    withType<Wrapper> {
+        gradleVersion = "6.4"
+    }
 }

@@ -1,16 +1,15 @@
 package io.vertx.examples.feeds.dao;
 
-import io.vertx.core.AsyncResult;
-import io.vertx.core.Handler;
+import io.vertx.core.Future;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.mongo.MongoClient;
-import io.vertx.ext.mongo.MongoClientUpdateResult;
 
-import java.util.List;
+import java.util.Optional;
 
 public class MongoDAO {
 
+    public static final String ID_COLUMN = "_id";
 	public static final String TABLE_USERS = "users";
 	public static final String TABLE_FEEDS = "feeds";
 	public static final String COLUMN_SUBSCRIPTIONS = "subscriptions";
@@ -21,123 +20,98 @@ public class MongoDAO {
 		this.mongo = mongo;
 	}
 
-	public void userById(String userId, Handler<AsyncResult<JsonObject>> handler) {
-		JsonObject query = new JsonObject();
-		query.put("_id", userId);
-		mongo.findOne(TABLE_USERS, query, null, handler);
+	public Future<Optional<JsonObject>> userById(String userId) {
+		return mongo
+                .findOne(TABLE_USERS, new JsonObject().put(ID_COLUMN, userId), null)
+                .map(Optional::ofNullable);
 	}
 
-	public void userByLoginAndPwd(String login, String hashedPwd, Handler<AsyncResult<JsonObject>> handler) {
-		JsonObject query = new JsonObject();
-		query.put("login", login);
-		query.put("password", hashedPwd);
-		mongo.findOne(TABLE_USERS, query, null, handler);
+	public Future<Optional<JsonObject>> userByLoginAndPwd(String login, String hashedPwd) {
+		var query = new JsonObject()
+                .put("login", login)
+		        .put("password", hashedPwd);
+		return mongo
+                .findOne(TABLE_USERS, query, null)
+                .map(Optional::ofNullable);
 	}
 
-	public void newUser(String login, String hashedPwd, Handler<AsyncResult<String>> handler) {
-		final JsonObject user = new JsonObject();
-		user.put("login", login);
-		user.put("password", hashedPwd);
-		user.put(TABLE_FEEDS, new JsonArray());
-		mongo.insert(TABLE_USERS, user, handler);
+	public Future<String> newUser(String login, String hashedPwd) {
+		var user = new JsonObject()
+            .put("login", login)
+            .put("password", hashedPwd)
+            .put(TABLE_FEEDS, new JsonArray());
+		return mongo.insert(TABLE_USERS, user);
 	}
 
-	public void getFeed(String feedHash, Handler<AsyncResult<JsonObject>> handler) {
-		JsonObject query = new JsonObject();
-		query.put("hash", feedHash);
-		mongo.findOne(TABLE_FEEDS, query, null, handler);
-	}
-
-	public void updateFeed(String feedHash, JsonObject newValue, Handler<AsyncResult<MongoClientUpdateResult>> handler) {
-		JsonObject query = new JsonObject();
-		query.put("hash", feedHash);
-		JsonObject updateQuery = new JsonObject();
-		updateQuery.put("$set", newValue);
-		mongo.updateCollection(TABLE_FEEDS, query, updateQuery, handler);
+	public Future<Optional<JsonObject>> getFeedByHash(String feedHash) {
+		return mongo
+                .findOne(TABLE_FEEDS, new JsonObject().put("hash", feedHash), null)
+                .map(Optional::ofNullable);
 	}
 
 	@SuppressWarnings("unchecked")
-	public void unsubscribe(JsonObject user, JsonObject subscription, Handler<AsyncResult<?>> handler) {
-		List<JsonObject> subscriptions = user.getJsonArray(COLUMN_SUBSCRIPTIONS).getList();
-		subscriptions.removeIf(sub -> {
-			return sub.getString("hash").equals(subscription.getString("hash"));
-		});
-		JsonObject newSubscriptions = new JsonObject();
-		newSubscriptions.put("$set", new JsonObject().put(COLUMN_SUBSCRIPTIONS, new JsonArray(subscriptions)));
-		JsonObject userQuery = new JsonObject();
-		userQuery.put("_id", user.getString("_id"));
-		mongo.findOneAndUpdate(TABLE_USERS, userQuery, newSubscriptions, updateHandler -> {
-			if (updateHandler.failed()) {
-				handler.handle(updateHandler);
-				return;
-			}
-			JsonObject feedQuery = new JsonObject();
-			feedQuery.put("_id", subscription.getString("_id"));
-			mongo.findOne(TABLE_FEEDS, feedQuery, null, duplicateHandler -> {
-				if (duplicateHandler.failed()) {
-					handler.handle(duplicateHandler);
-					return;
-				}
-				JsonObject feed = duplicateHandler.result();
-				JsonObject updateQuery = new JsonObject();
-				Integer oldCount = feed.getInteger(COLUMN_SUBSCRIBER_COUNT, 1);
-				subscription.put(COLUMN_SUBSCRIBER_COUNT, oldCount - 1);
-				updateQuery.put("_id", feed.getString("_id"));
-				JsonObject updateValue = new JsonObject();
-				updateValue.put("$set", subscription);
-				mongo.update(TABLE_FEEDS, updateQuery, updateValue, handler::handle);
-			});
-
-		});
+	public Future<Void> unsubscribe(JsonObject user, JsonObject subscription) {
+		var subscriptions = user.getJsonArray(COLUMN_SUBSCRIPTIONS);
+		subscriptions.getList().removeIf(sub ->
+                ((JsonObject)sub).getString("hash").equals(subscription.getString("hash"))
+        );
+		var newSubscriptions = new JsonObject().put("$set", new JsonObject().put(COLUMN_SUBSCRIPTIONS, subscriptions));
+		return mongo.findOneAndUpdate(TABLE_USERS, byId(user.getString(ID_COLUMN)), newSubscriptions)
+                .flatMap(res -> mongo.findOne(TABLE_FEEDS, byId(subscription.getString(ID_COLUMN)), null))
+                .flatMap(feed -> {
+                    var oldCount = feed.getInteger(COLUMN_SUBSCRIBER_COUNT, 1);
+                    subscription.put(COLUMN_SUBSCRIBER_COUNT, oldCount - 1);
+                    var updateValue = new JsonObject().put("$set", subscription);
+                    return mongo.updateCollection(TABLE_FEEDS, byId(feed.getString(ID_COLUMN)), updateValue);
+                })
+                .mapEmpty();
 	}
 
-	public void newSubscription(JsonObject user, JsonObject subscription, Handler<AsyncResult<?>> handler) {
-		String urlHash = subscription.getString("hash");
-		JsonObject findQuery = new JsonObject();
-		findQuery.put("hash", urlHash);
-		mongo.findOne(TABLE_FEEDS, findQuery, null, findResult -> {
-			if (findResult.failed()) {
-				handler.handle(findResult);
-				return;
-			}
-			JsonObject existingFeed = findResult.result();
-			if (existingFeed == null) {
-				subscription.put(COLUMN_SUBSCRIBER_COUNT, 1);
-				mongo.insert(TABLE_FEEDS, subscription, insertResult -> {
-					if (insertResult.failed()) {
-						handler.handle(insertResult);
-						return;
-					}
-					subscription.put("_id", insertResult.result());
-					attachSubscriptionToUser(user, subscription, handler);
-				});
-			} else {
-				JsonObject updateQuery = new JsonObject();
-				Integer oldCount = existingFeed.getInteger(COLUMN_SUBSCRIBER_COUNT, 0);
-				subscription.put(COLUMN_SUBSCRIBER_COUNT, oldCount + 1);
-				updateQuery.put("_id", existingFeed.getString("_id"));
-				subscription.put("_id", existingFeed.getString("_id"));
-				JsonObject updateValue = new JsonObject();
-				updateValue.put("$set", subscription);
-				mongo.findOneAndUpdate(TABLE_FEEDS, updateQuery, updateValue, updateHandler -> {
-					if (updateHandler.failed()) {
-						handler.handle(updateHandler);
-						return;
-					}
-					attachSubscriptionToUser(user, subscription, handler);
-				});
-			}
-		});
+	public Future<Void> newSubscription(JsonObject user, JsonObject subscription) {
+		var urlHash = subscription.getString("hash");
+		return getFeedByHash(urlHash)
+                .flatMap(maybeFeed -> {
+                    if (maybeFeed.isEmpty()) {
+                        return createSubscription(subscription, user);
+                    } else {
+                        return updateSubscription(subscription, user, maybeFeed.get());
+                    }
+                })
+                .mapEmpty();
 	}
 
-	private void attachSubscriptionToUser(JsonObject user, JsonObject subscription, Handler<AsyncResult<?>> handler) {
-		JsonArray subscriptions = user.getJsonArray(COLUMN_SUBSCRIPTIONS, new JsonArray());
-		subscriptions.add(subscription);
-		JsonObject query = new JsonObject();
-		query.put("_id", user.getString("_id"));
-		JsonObject newSubscriptions = new JsonObject();
-		newSubscriptions.put("$set", new JsonObject().put(COLUMN_SUBSCRIPTIONS, subscriptions));
-		mongo.findOneAndUpdate(TABLE_USERS, query, newSubscriptions, handler::handle);
+	private Future<JsonObject> createSubscription(JsonObject subscription, JsonObject user) {
+        subscription.put(COLUMN_SUBSCRIBER_COUNT, 1);
+        return mongo
+                .insert(TABLE_FEEDS, subscription)
+                .flatMap(newSubscription -> {
+                    subscription.put(ID_COLUMN, newSubscription);
+                    return attachSubscriptionToUser(user, subscription);
+                });
+    }
+
+    private JsonObject byId(String id) {
+	    return new JsonObject().put(ID_COLUMN, id);
+    }
+
+    private Future<JsonObject> updateSubscription(JsonObject subscription, JsonObject user, JsonObject feed) {
+        var feedId = feed.getString(ID_COLUMN);
+        var oldCount = feed.getInteger(COLUMN_SUBSCRIBER_COUNT, 0);
+        subscription
+                .put(COLUMN_SUBSCRIBER_COUNT, oldCount + 1)
+                .put(ID_COLUMN, feedId);
+        var updateValue = new JsonObject().put("$set", subscription);
+        return mongo
+                .findOneAndUpdate(TABLE_FEEDS, byId(feedId), updateValue)
+                .flatMap(updateHandler -> attachSubscriptionToUser(user, subscription));
+    }
+
+	private Future<JsonObject> attachSubscriptionToUser(JsonObject user, JsonObject subscription) {
+		var subscriptions = user.getJsonArray(COLUMN_SUBSCRIPTIONS, new JsonArray()).add(subscription);
+		var query = new JsonObject().put(ID_COLUMN, user.getString(ID_COLUMN));
+		var newSubscriptions = new JsonObject()
+                .put("$set", new JsonObject().put(COLUMN_SUBSCRIPTIONS, subscriptions));
+		return mongo.findOneAndUpdate(TABLE_USERS, query, newSubscriptions);
 	}
 
 }

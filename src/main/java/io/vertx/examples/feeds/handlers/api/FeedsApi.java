@@ -1,28 +1,21 @@
 package io.vertx.examples.feeds.handlers.api;
 
-import io.vertx.core.http.HttpServerRequest;
-import io.vertx.core.http.HttpServerResponse;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
-import io.vertx.core.logging.Logger;
-import io.vertx.core.logging.LoggerFactory;
 import io.vertx.examples.feeds.dao.MongoDAO;
 import io.vertx.examples.feeds.dao.RedisDAO;
 import io.vertx.examples.feeds.utils.StringUtils;
 import io.vertx.ext.web.RoutingContext;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
+import static io.vertx.examples.feeds.utils.VertxUtils.failOr;
 
 /**
  * Simple CRUD for handling feeds
  */
 public class FeedsApi {
 
-	private static final Logger LOG = LoggerFactory.getLogger(FeedsApi.class);
-	public static final String COLUMN_SUBSCRIPTIONS = "subscriptions";
-	public static final String COLUMN_FEED_ID = "feedId";
+	public static final String SUBSCRIPTIONS_COLUMN = "subscriptions";
+	public static final String FEED_ID_COLUMN = "feedId";
 
 	private final MongoDAO mongo;
 	private final RedisDAO redis;
@@ -34,118 +27,101 @@ public class FeedsApi {
 		this.strUtils = new StringUtils();
 	}
 
-	public void create(RoutingContext context) {
-		JsonObject body = context.getBodyAsJson();
-		JsonObject user = context.get("user");
-		JsonArray subscriptions = user.getJsonArray(COLUMN_SUBSCRIPTIONS);
-		final String urlHash = strUtils.hash256(body.getString("url"));
+	public void create(RoutingContext rc) {
+		var body = rc.getBodyAsJson();
+		var user = extractUser(rc);
+		var subscriptions = user.getJsonArray(SUBSCRIPTIONS_COLUMN);
+		var urlHash = strUtils.hash256(body.getString("url"));
 		body.put("hash", urlHash);
 		if (subscriptions != null) {
-			boolean alreadySubscribed = subscriptions.stream().anyMatch(subscription ->
-					((JsonObject) subscription).getString("hash").equals(urlHash)
-			);
+			boolean alreadySubscribed = subscriptions
+                    .stream()
+                    .anyMatch(subscription ->
+					    ((JsonObject) subscription).getString("hash").equals(urlHash)
+			        );
 			if (alreadySubscribed) {
-				context.fail(400);
+				rc.fail(409);
 				return;
 			}
 		}
-		mongo.newSubscription(user, body, result -> {
-			if (result.failed()) {
-				context.fail(result.cause());
-				return;
-			}
-			context.response().end(body.toString());
-		});
+		mongo.newSubscription(user, body)
+                .setHandler(failOr(rc, result ->
+                        rc.response().end(body.toString())
+                ));
 	}
 
-	public void retrieve(RoutingContext context) {
-		HttpServerRequest request = context.request();
-		String feedId = request.getParam(COLUMN_FEED_ID);
+	public void retrieve(RoutingContext rc) {
+		var request = rc.request();
+		var feedId = request.getParam(FEED_ID_COLUMN);
 		if (feedId == null) {
-			context.fail(400);
+			rc.fail(400);
 			return;
 		}
-		JsonObject user = context.get("user");
-		JsonObject subscription = getSubscription(user, context);
+		var user = extractUser(rc);
+		var subscription = getSubscription(user, rc);
 		if (subscription != null) {
-			context.response().end(subscription.toString());
+			rc.response().end(subscription.toString());
 		}
 	}
 
-	public void update(RoutingContext context) {
-		context.response().end("TODO");
-	}
-
-	public void delete(RoutingContext context) {
-		JsonObject user = context.get("user");
-		JsonObject subscription = getSubscription(user, context);
+	public void delete(RoutingContext rc) {
+		var user = extractUser(rc);
+		var subscription = getSubscription(user, rc);
 		if (subscription == null) {
 			return;
 		}
-		String feedId = context.request().getParam(COLUMN_FEED_ID);
+		var feedId = rc.request().getParam(FEED_ID_COLUMN);
 		subscription.put("hash", feedId);
-		mongo.unsubscribe(user, subscription, result -> {
-			if (result.failed()) {
-				context.fail(result.cause());
-				return;
-			}
-			context.response().end(subscription.toString());
-		});
+		mongo.unsubscribe(user, subscription)
+                .setHandler(failOr(rc, r -> rc.response().end(subscription.toString())));
 	}
 
-	public void list(RoutingContext context) {
-		JsonObject user = context.get("user");
-		JsonArray subscriptions = user.getJsonArray(COLUMN_SUBSCRIPTIONS);
+	public void list(RoutingContext rc) {
+		var user = extractUser(rc);
+		var subscriptions = user.getJsonArray(SUBSCRIPTIONS_COLUMN);
 		if (subscriptions == null) {
 			subscriptions = new JsonArray();
 		}
-		HttpServerResponse response = context.response();
-		response.end(subscriptions.toString());
+		rc.response().end(subscriptions.toString());
 	}
 
-	public void entries(RoutingContext context) {
-		JsonObject user = context.get("user");
-		JsonObject feed = getSubscription(user, context);
+	public void entries(RoutingContext rc) {
+		var user = extractUser(rc);
+		var feed = getSubscription(user, rc);
 		if (feed != null) {
-			String feedId = context.request().getParam(COLUMN_FEED_ID);
-			redis.getEntries(feedId, null, null, handler -> {
-				if (handler.failed()) {
-					context.fail(handler.cause());
-				} else {
-					JsonArray orig = handler.result();
-					List<JsonObject> list = new ArrayList<>(orig.size());
-					orig.forEach(val -> {
-						LOG.info("found val : " + val);
-						list.add(new JsonObject(val.toString()));
-					});
-					context.response().end(list.toString());
-				}
-			});
+			var feedId = rc.request().getParam(FEED_ID_COLUMN);
+			redis.allEntriesForFeed(feedId, null, null)
+                    .setHandler(failOr(rc, entries -> rc.response().end(entries.encode())));
 		}
 	}
 
-	private static JsonObject getSubscription(JsonObject user, RoutingContext context) {
-		String feedId = context.request().getParam(COLUMN_FEED_ID);
+	private static JsonObject getSubscription(JsonObject user, RoutingContext rc) {
+		var feedId = rc.request().getParam(FEED_ID_COLUMN);
 		if (feedId == null) {
-			context.fail(400);
+			rc.fail(400);
 			return null;
 		}
-		JsonArray subscriptions = user.getJsonArray(COLUMN_SUBSCRIPTIONS);
+		var subscriptions = user.getJsonArray(SUBSCRIPTIONS_COLUMN);
 		if (subscriptions == null) {
-			context.fail(404);
+			rc.fail(404);
 			return null;
 		}
-		Optional<Object> optional = subscriptions.stream().filter(sub -> {
-			JsonObject subscription = (JsonObject) sub;
-			return subscription.getString("hash").equals(feedId);
-		}).findFirst();
+		var optional = subscriptions
+                .stream()
+                .filter(sub -> ((JsonObject)sub).getString("hash").equals(feedId))
+                .findFirst();
 		if (optional.isPresent()) {
 			// OK, it's one of user's subscription
 			return (JsonObject) optional.get();
 		} else { // either the feed doesn't exist, or the user tries to access
 			     // someone else's feed -> no distinction
-			context.fail(403);
+			rc.fail(403);
 			return null;
 		}
 	}
+
+	private JsonObject extractUser(RoutingContext rc) {
+	    return rc.get("user");
+    }
+
 }
