@@ -4,14 +4,14 @@ val mainVerticle = "io.vertx.examples.feeds.verticles.MainVerticle"
 buildscript {
 	// Gradle plugins
 	dependencies {
-		classpath("com.github.jengelman.gradle.plugins:shadow:4.0.2") // FatJar packaging
+		classpath("com.github.jengelman.gradle.plugins:shadow:5.2.0") // FatJar packaging
 	}
 }
 
 plugins {
 	java
 	application
-	id("com.github.johnrengelman.shadow") version "4.0.2"
+	id("com.github.johnrengelman.shadow") version "5.2.0"
 }
 
 repositories {
