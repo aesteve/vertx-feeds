@@ -7,7 +7,7 @@ import io.vertx.examples.feeds.dao.RedisDAO;
 import io.vertx.examples.feeds.utils.StringUtils;
 import io.vertx.ext.web.RoutingContext;
 
-import java.util.Optional;
+import static io.vertx.examples.feeds.utils.VertxUtils.failOr;
 
 /**
  * Simple CRUD for handling feeds
@@ -45,13 +45,9 @@ public class FeedsApi {
 			}
 		}
 		mongo.newSubscription(user, body)
-                .setHandler(result -> {
-                    if (result.failed()) {
-                        rc.fail(result.cause());
-                        return;
-                    }
-                    rc.response().end(body.toString());
-                });
+                .setHandler(failOr(rc, result ->
+                        rc.response().end(body.toString())
+                ));
 	}
 
 	public void retrieve(RoutingContext rc) {
@@ -77,13 +73,7 @@ public class FeedsApi {
 		var feedId = rc.request().getParam(FEED_ID_COLUMN);
 		subscription.put("hash", feedId);
 		mongo.unsubscribe(user, subscription)
-                .setHandler(result -> {
-                    if (result.failed()) {
-                        rc.fail(result.cause());
-                        return;
-                    }
-                    rc.response().end(subscription.toString());
-                });
+                .setHandler(failOr(rc, r -> rc.response().end(subscription.toString())));
 	}
 
 	public void list(RoutingContext rc) {
@@ -101,13 +91,7 @@ public class FeedsApi {
 		if (feed != null) {
 			var feedId = rc.request().getParam(FEED_ID_COLUMN);
 			redis.allEntriesForFeed(feedId, null, null)
-                    .setHandler(res -> {
-                        if (res.failed()) {
-                            rc.fail(res.cause());
-                        } else {
-                            rc.response().end(res.result().encode());
-                        }
-                    });
+                    .setHandler(failOr(rc, entries -> rc.response().end(entries.encode())));
 		}
 	}
 

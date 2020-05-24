@@ -6,6 +6,7 @@ import io.vertx.examples.feeds.utils.StringUtils;
 import io.vertx.ext.web.RoutingContext;
 
 import static io.vertx.examples.feeds.dao.MongoDAO.ID_COLUMN;
+import static io.vertx.examples.feeds.utils.VertxUtils.failOr;
 
 public class AuthenticationApi {
 
@@ -23,43 +24,32 @@ public class AuthenticationApi {
 		this.strUtils = new StringUtils();
 	}
 
-	public void register(RoutingContext context) {
-		var login = context.request().getParam(LOGIN);
-		var pwd = context.request().getParam(PWD);
+	public void register(RoutingContext rc) {
+		var login = rc.request().getParam(LOGIN);
+		var pwd = rc.request().getParam(PWD);
 		mongo.newUser(login, strUtils.hash256(pwd))
-                .setHandler(result -> {
-                    if (result.failed()) {
-                        context.fail(result.cause());
-                    } else {
-                        redirectTo(context, "/login.hbs");
-                    }
-                });
+                .setHandler(failOr(rc, result -> redirectTo(rc, "/login.hbs")));
 	}
 
 	public void login(RoutingContext context) {
 		var login = context.request().getParam(LOGIN);
 		var pwd = context.request().getParam(PWD);
 		mongo.userByLoginAndPwd(login, strUtils.hash256(pwd))
-            .setHandler(res -> {
-			if (res.failed()) {
-				context.fail(res.cause());
-				return;
-			}
-			var maybeUser = res.result();
-			if (maybeUser.isEmpty()) {
-				redirectTo(context, "/login.hbs");
-				return;
-			}
-			var user = maybeUser.get();
-			var accessToken = strUtils.generateToken();
-			var userId = user.getString(ID_COLUMN);
-            context.session()
-                .put(ACCESS_TOKEN, accessToken)
-			    .put(LOGIN, login)
-                .put(USER_ID, userId);
-			context.vertx().sharedData().getLocalMap("access_tokens").put(accessToken, userId);
-			redirectTo(context, INDEX);
-		});
+            .setHandler(failOr(context, maybeUser -> {
+                if (maybeUser.isEmpty()) {
+                    redirectTo(context, "/login.hbs");
+                    return;
+                }
+                var user = maybeUser.get();
+                var accessToken = strUtils.generateToken();
+                var userId = user.getString(ID_COLUMN);
+                context.session()
+                    .put(ACCESS_TOKEN, accessToken)
+                    .put(LOGIN, login)
+                    .put(USER_ID, userId);
+                context.vertx().sharedData().getLocalMap("access_tokens").put(accessToken, userId);
+                redirectTo(context, INDEX);
+    		}));
 	}
 
 	public void logout(RoutingContext rc) {

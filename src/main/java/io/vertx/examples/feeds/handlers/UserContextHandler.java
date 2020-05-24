@@ -3,6 +3,8 @@ package io.vertx.examples.feeds.handlers;
 import io.vertx.examples.feeds.dao.MongoDAO;
 import io.vertx.ext.web.RoutingContext;
 
+import static io.vertx.examples.feeds.utils.VertxUtils.failOr;
+
 public class UserContextHandler {
 
 	private final MongoDAO mongo;
@@ -36,18 +38,13 @@ public class UserContextHandler {
 
 	private void findAndInjectUser(RoutingContext rc, String userId) {
 		mongo.userById(userId)
-            .setHandler(res -> {
-                if (res.failed()) {
-                    rc.fail(res.cause());
-                } else {
-                    var maybeUser = res.result();
-                    if (maybeUser.isEmpty()) {
-                        rc.fail(403);
-                        return;
-                    }
-                    rc.put("user", maybeUser.get());
-                    rc.next();
+            .setHandler(failOr(rc, maybeUser -> {
+                if (maybeUser.isEmpty()) {
+                    rc.fail(403);
+                    return;
                 }
-            });
+                rc.put("user", maybeUser.get());
+                rc.next();
+            }));
 	}
 }
