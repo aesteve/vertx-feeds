@@ -16,7 +16,8 @@ public class AuthenticationApi {
 	private static final String LOGIN = "login";
 	private static final String PWD = "password";
 	private static final String ACCESS_TOKEN = "access_token";
-	private static final String INDEX = "/index.hbs";
+	private static final String INDEX_PAGE = "/index.hbs";
+    private static final String LOGIN_PAGE = "/login.hbs";
 	private static final String USER_ID = "userId";
 
 	public AuthenticationApi(MongoDAO mongo) {
@@ -25,10 +26,10 @@ public class AuthenticationApi {
 	}
 
 	public void register(RoutingContext rc) {
-		var login = rc.request().getParam(LOGIN);
+		var login = rc.request().getParam(LOGIN_PAGE);
 		var pwd = rc.request().getParam(PWD);
 		mongo.newUser(login, strUtils.hash256(pwd))
-                .setHandler(failOr(rc, result -> redirectTo(rc, "/login.hbs")));
+                .setHandler(failOr(rc, result -> redirectTo(rc, LOGIN_PAGE)));
 	}
 
 	public void login(RoutingContext context) {
@@ -37,7 +38,7 @@ public class AuthenticationApi {
 		mongo.userByLoginAndPwd(login, strUtils.hash256(pwd))
             .setHandler(failOr(context, maybeUser -> {
                 if (maybeUser.isEmpty()) {
-                    redirectTo(context, "/login.hbs");
+                    redirectTo(context, LOGIN_PAGE);
                     return;
                 }
                 var user = maybeUser.get();
@@ -45,23 +46,23 @@ public class AuthenticationApi {
                 var userId = user.getString(ID_COLUMN);
                 context.session()
                     .put(ACCESS_TOKEN, accessToken)
-                    .put(LOGIN, login)
+                    .put(LOGIN_PAGE, login)
                     .put(USER_ID, userId);
                 context.vertx().sharedData().getLocalMap("access_tokens").put(accessToken, userId);
-                redirectTo(context, INDEX);
+                redirectTo(context, INDEX_PAGE);
     		}));
 	}
 
 	public void logout(RoutingContext rc) {
 		var session = rc.session();
-		session.remove(LOGIN);
+		session.remove(LOGIN_PAGE);
 		session.remove(USER_ID);
 		var accessToken = session.get(ACCESS_TOKEN);
 		if (accessToken != null) {
 			rc.vertx().sharedData().getLocalMap("access_tokens").remove(accessToken);
 		}
 		session.remove(ACCESS_TOKEN);
-		redirectTo(rc, "/index.hbs");
+		redirectTo(rc, INDEX_PAGE);
 	}
 
 	private static void redirectTo(RoutingContext rc, String url) {
