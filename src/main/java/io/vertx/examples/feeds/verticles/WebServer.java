@@ -152,7 +152,6 @@ public class WebServer extends AbstractVerticle {
 		router.post("/feeds").handler(feedsApi::create);
 		router.get("/feeds").handler(feedsApi::list);
 		router.get("/feeds/:feedId").handler(feedsApi::retrieve);
-		router.put("/feeds/:feedId").handler(feedsApi::update);
 		router.get("/feeds/:feedId/entries").handler(feedsApi::entries);
 		router.delete("/feeds/:feedId").handler(feedsApi::delete);
 

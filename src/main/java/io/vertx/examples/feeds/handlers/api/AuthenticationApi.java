@@ -62,16 +62,16 @@ public class AuthenticationApi {
 		});
 	}
 
-	public void logout(RoutingContext context) {
-		var session = context.session();
+	public void logout(RoutingContext rc) {
+		var session = rc.session();
 		session.remove(LOGIN);
 		session.remove(USER_ID);
 		var accessToken = session.get(ACCESS_TOKEN);
 		if (accessToken != null) {
-			context.vertx().sharedData().getLocalMap("access_tokens").remove(accessToken);
+			rc.vertx().sharedData().getLocalMap("access_tokens").remove(accessToken);
 		}
 		session.remove(ACCESS_TOKEN);
-		redirectTo(context, "/index.hbs");
+		redirectTo(rc, "/index.hbs");
 	}
 
 	private static void redirectTo(RoutingContext rc, String url) {

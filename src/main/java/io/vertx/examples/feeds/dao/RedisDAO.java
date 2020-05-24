@@ -3,6 +3,7 @@ package io.vertx.examples.feeds.dao;
 import io.vertx.core.Future;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
+import io.vertx.examples.feeds.utils.VertxUtils;
 import io.vertx.examples.feeds.utils.rss.FeedConverters;
 import io.vertx.redis.client.RedisAPI;
 import org.slf4j.Logger;
@@ -13,7 +14,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
-import java.util.stream.Collector;
 
 public class RedisDAO {
 
@@ -26,7 +26,7 @@ public class RedisDAO {
 	}
 
 	public Future<JsonArray> allEntriesForFeed(String feedHash, Date from, Date to) {
-	    List<String> args = new ArrayList<>();
+	    var args = new ArrayList<String>();
 	    args.add(feedHash);
 		if (from != null) {
 			args.add(Double.toString((double)from.getTime()));
@@ -42,7 +42,7 @@ public class RedisDAO {
                 .zrevrangebyscore(args)
                 .map(res -> res.stream()
                                 .map(entry -> new JsonObject(entry.toString()))
-                                .collect(Collector.of(JsonArray::new, JsonArray::add, JsonArray::addAll))
+                                .collect(VertxUtils.JSON_ARRAY_COLLECTOR)
                 );
 	}
 
@@ -71,12 +71,7 @@ public class RedisDAO {
             args.add(Double.toString(entry.getDouble("score")));
 		    args.add(entry.toString());
         });
-		return redis
-                .zadd(args)
-                .onFailure(f ->
-                        LOG.error("Could not insert entries into redis", f)
-                )
-                .mapEmpty();
+		return redis.zadd(args).mapEmpty();
 	}
 
 }
