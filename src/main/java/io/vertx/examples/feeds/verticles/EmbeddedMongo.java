@@ -17,13 +17,12 @@ public class EmbeddedMongo extends AbstractVerticle {
 
 	@Override
 	public void start(Promise<Void> future) {
-		MongodStarter starter = MongodStarter.getDefaultInstance();
-
+		var starter = MongodStarter.getDefaultInstance();
 		try {
-			int port = MainVerticle.MONGO_PORT;
-			MongodConfigBuilder builder = new MongodConfigBuilder();
-			builder.version(Version.Main.PRODUCTION);
-			builder.net(new Net(port, Network.localhostIsIPv6()));
+			var port = MainVerticle.MONGO_PORT;
+			var builder = new MongodConfigBuilder()
+                    .version(Version.Main.PRODUCTION)
+                    .net(new Net(port, Network.localhostIsIPv6()));
 			mongod = starter.prepare(builder.build());
 			mongod.start();
 		} catch (IOException ioe) {

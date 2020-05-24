@@ -78,15 +78,15 @@ public class WebServer extends AbstractVerticle {
 	}
 
 	private Router createRouter() {
-		Router router = Router.router(vertx);
+		var router = Router.router(vertx);
 		router.route().failureHandler(ErrorHandler.create(true));
 
 		/* Static resources */
 		staticHandler(router);
 
 		/* Session / cookies for users */
-		SessionStore sessionStore = LocalSessionStore.create(vertx);
-		SessionHandler sessionHandler = SessionHandler.create(sessionStore);
+		var sessionStore = LocalSessionStore.create(vertx);
+		var sessionHandler = SessionHandler.create(sessionStore);
 		router.route().handler(sessionHandler);
 		userContextHandler = new UserContextHandler(mongo);
 

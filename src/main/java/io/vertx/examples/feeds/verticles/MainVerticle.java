@@ -84,8 +84,8 @@ public class MainVerticle extends AbstractVerticle {
 		    .put("port", REDIS_PORT);
 
 	public static void main(String... args) {
-		var vertx = Vertx.vertx();
-		vertx.deployVerticle(MainVerticle.class.getName());
+		Vertx.vertx()
+		    .deployVerticle(MainVerticle.class.getName());
 	}
 
 }
