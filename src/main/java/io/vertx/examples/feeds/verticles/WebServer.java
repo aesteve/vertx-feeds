@@ -2,7 +2,7 @@ package io.vertx.examples.feeds.verticles;
 
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Context;
-import io.vertx.core.Future;
+import io.vertx.core.Promise;
 import io.vertx.core.Vertx;
 import io.vertx.core.http.HttpServer;
 import io.vertx.core.http.HttpServerOptions;
@@ -16,14 +16,18 @@ import io.vertx.examples.feeds.utils.RedisUtils;
 import io.vertx.ext.bridge.PermittedOptions;
 import io.vertx.ext.mongo.MongoClient;
 import io.vertx.ext.web.Router;
-import io.vertx.ext.web.Session;
-import io.vertx.ext.web.handler.*;
+import io.vertx.ext.web.handler.BodyHandler;
+import io.vertx.ext.web.handler.ErrorHandler;
+import io.vertx.ext.web.handler.SessionHandler;
+import io.vertx.ext.web.handler.StaticHandler;
+import io.vertx.ext.web.handler.TemplateHandler;
 import io.vertx.ext.web.handler.sockjs.BridgeOptions;
 import io.vertx.ext.web.handler.sockjs.SockJSHandler;
 import io.vertx.ext.web.sstore.LocalSessionStore;
 import io.vertx.ext.web.sstore.SessionStore;
 import io.vertx.ext.web.templ.handlebars.HandlebarsTemplateEngine;
-import io.vertx.redis.RedisClient;
+import io.vertx.redis.client.Redis;
+import io.vertx.redis.client.RedisAPI;
 
 import static io.vertx.core.http.HttpHeaders.CONTENT_TYPE;
 
@@ -45,36 +49,32 @@ public class WebServer extends AbstractVerticle {
 	}
 
 	@Override
-	public void start(Future<Void> future) {
+	public void start(Promise<Void> future) {
 		mongo = new MongoDAO(MongoClient.createShared(vertx, config.getJsonObject("mongo")));
-		RedisDAO redis = new RedisDAO(RedisClient.create(vertx, RedisUtils.createRedisOptions(config.getJsonObject("redis"))));
+		var redisCli = Redis.createClient(vertx, RedisUtils.createRedisOptions(config.getJsonObject("redis")));
+		var redis = new RedisDAO(RedisAPI.api(redisCli));
 		authApi = new AuthenticationApi(mongo);
 		feedsApi = new FeedsApi(mongo, redis);
 		server = vertx.createHttpServer(createOptions());
-		server.requestHandler(createRouter());
-		server.listen(result -> {
-			if (result.succeeded()) {
-				future.complete();
-			} else {
-				future.fail(result.cause());
-			}
-		});
+		server.requestHandler(createRouter())
+                .listen()
+                .<Void>mapEmpty()
+                .setHandler(future);
 	}
 
 	@Override
-	public void stop(Future<Void> future) {
+	public void stop(Promise<Void> future) {
 		if (server == null) {
 			future.complete();
 			return;
 		}
-		server.close(future.completer());
+		server.close(future);
 	}
 
 	private static HttpServerOptions createOptions() {
-		HttpServerOptions options = new HttpServerOptions();
-		options.setHost("localhost");
-		options.setPort(9000);
-		return options;
+		return new HttpServerOptions()
+                .setHost("localhost")
+                .setPort(9000);
 	}
 
 	private Router createRouter() {
@@ -85,7 +85,6 @@ public class WebServer extends AbstractVerticle {
 		staticHandler(router);
 
 		/* Session / cookies for users */
-		router.route().handler(CookieHandler.create());
 		SessionStore sessionStore = LocalSessionStore.create(vertx);
 		SessionHandler sessionHandler = SessionHandler.create(sessionStore);
 		router.route().handler(sessionHandler);
@@ -104,30 +103,27 @@ public class WebServer extends AbstractVerticle {
 	}
 
 	private SockJSHandler eventBusHandler() {
-		SockJSHandler handler = SockJSHandler.create(vertx);
-		BridgeOptions options = new BridgeOptions();
-		PermittedOptions permitted = new PermittedOptions(); /* allow everything, we don't care for the demo */
-		options.addOutboundPermitted(permitted);
-		handler.bridge(options);
-		return handler;
+		var sockJSHandler = SockJSHandler.create(vertx);
+		sockJSHandler.bridge(
+		        new BridgeOptions().addOutboundPermitted(new PermittedOptions())
+        );
+		return sockJSHandler;
 	}
 
 	private static void staticHandler(Router router) {
-		StaticHandler staticHandler = StaticHandler.create();
-		staticHandler.setCachingEnabled(false);
-		router.route("/assets/*").handler(staticHandler);
+		router.route("/assets/*").handler(StaticHandler
+                .create()
+                .setCachingEnabled(false));
 	}
 
 	private void dynamicPages(Router router) {
-		HandlebarsTemplateEngine hbsEngine = HandlebarsTemplateEngine.create(vertx);
-		hbsEngine.setMaxCacheSize(0); /* no cache since we wan't hot-reload for templates */
-		TemplateHandler templateHandler = TemplateHandler.create(hbsEngine);
+		var templateHandler = TemplateHandler.create(HandlebarsTemplateEngine.create(vertx));
 		router.get("/private/*").handler(userContextHandler::fromSession);
-		router.getWithRegex(".+\\.hbs").handler(context -> {
-			final Session session = context.session();
-			context.data().put("userLogin", session.get("login")); /* in order to greet him */
-			context.data().put("accessToken", session.get("access_token")); /* for api calls */
-			context.next();
+		router.getWithRegex(".+\\.hbs").handler(rc -> {
+			var session = rc.session();
+			rc.data().put("userLogin", session.get("login")); /* in order to greet him */
+			rc.data().put("accessToken", session.get("access_token")); /* for api calls */
+			rc.next();
 		});
 		router.getWithRegex(".+\\.hbs").handler(templateHandler);
 	}
@@ -137,13 +133,13 @@ public class WebServer extends AbstractVerticle {
 		 * TODO : provide authentication through the AuthService / AuthProvider instead of a custom api handler
 		 * TODO : every page except login must be private TODO : use FormLoginHandler for the actual login form TODO : use RedirectAuthHandler for "/private"
 		 */
-		Router router = Router.router(vertx);
+		var router = Router.router(vertx);
 		router.route().consumes(APPLICATION_JSON);
 		router.route().produces(APPLICATION_JSON);
 		router.route().handler(BodyHandler.create());
-		router.route().handler(context -> {
-			context.response().headers().add(CONTENT_TYPE, APPLICATION_JSON);
-			context.next();
+		router.route().handler(rc -> {
+			rc.response().headers().add(CONTENT_TYPE, APPLICATION_JSON);
+			rc.next();
 		});
 
 		/* login / user-related stuff : no token needed */
@@ -162,4 +158,5 @@ public class WebServer extends AbstractVerticle {
 
 		return router;
 	}
+
 }

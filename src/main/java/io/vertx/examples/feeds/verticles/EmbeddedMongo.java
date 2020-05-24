@@ -1,23 +1,22 @@
 package io.vertx.examples.feeds.verticles;
 
-import io.vertx.core.AbstractVerticle;
-import io.vertx.core.Future;
-
-import java.io.IOException;
-
 import de.flapdoodle.embed.mongo.MongodExecutable;
 import de.flapdoodle.embed.mongo.MongodStarter;
 import de.flapdoodle.embed.mongo.config.MongodConfigBuilder;
 import de.flapdoodle.embed.mongo.config.Net;
 import de.flapdoodle.embed.mongo.distribution.Version;
 import de.flapdoodle.embed.process.runtime.Network;
+import io.vertx.core.AbstractVerticle;
+import io.vertx.core.Promise;
+
+import java.io.IOException;
 
 public class EmbeddedMongo extends AbstractVerticle {
 
 	private MongodExecutable mongod;
 
 	@Override
-	public void start(Future<Void> future) {
+	public void start(Promise<Void> future) {
 		MongodStarter starter = MongodStarter.getDefaultInstance();
 
 		try {
@@ -35,7 +34,7 @@ public class EmbeddedMongo extends AbstractVerticle {
 	}
 
 	@Override
-	public void stop(Future<Void> future) {
+	public void stop(Promise<Void> future) {
 		if (mongod != null) {
 			mongod.stop();
 			mongod = null;

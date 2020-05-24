@@ -1,79 +1,82 @@
 package io.vertx.examples.feeds.dao;
 
-import io.vertx.core.AsyncResult;
-import io.vertx.core.Handler;
+import io.vertx.core.Future;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
-import io.vertx.core.logging.Logger;
-import io.vertx.core.logging.LoggerFactory;
-import io.vertx.examples.feeds.utils.rss.FeedUtils;
-import io.vertx.redis.RedisClient;
-import io.vertx.redis.op.RangeLimitOptions;
+import io.vertx.examples.feeds.utils.rss.FeedConverters;
+import io.vertx.redis.client.RedisAPI;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.text.ParseException;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
+import java.util.stream.Collector;
 
 public class RedisDAO {
 
 	private static final Logger LOG = LoggerFactory.getLogger(RedisDAO.class);
 
-	private final RedisClient redis;
+	private final RedisAPI redis;
 
-	public RedisDAO(RedisClient redis) {
+	public RedisDAO(RedisAPI redis) {
 		this.redis = redis;
 	}
 
-	public void getEntries(String feedHash, Date from, Date to, Handler<AsyncResult<JsonArray>> handler) {
-		String fromStr;
-		String toStr;
+	public Future<JsonArray> allEntriesForFeed(String feedHash, Date from, Date to) {
+	    List<String> args = new ArrayList<>();
+	    args.add(feedHash);
 		if (from != null) {
-			fromStr = Double.toString((double)from.getTime());
+			args.add(Double.toString((double)from.getTime()));
 		} else {
-			fromStr = "-inf";
+			args.add("-inf");
 		}
 		if (to != null) {
-			toStr = Double.toString((double)to.getTime());
+			args.add(Double.toString((double)to.getTime()));
 		} else {
-			toStr = "+inf";
+			args.add("+inf");
 		}
-		redis.zrevrangebyscore(feedHash, toStr, fromStr, RangeLimitOptions.NONE, handler);
+		return redis
+                .zrevrangebyscore(args)
+                .map(res -> res.stream()
+                                .map(entry -> new JsonObject(entry.toString()))
+                                .collect(Collector.of(JsonArray::new, JsonArray::add, JsonArray::addAll))
+                );
 	}
 
-	public void getMaxDate(String feedHash, Handler<Date> handler) {
-		/*
-		 * FIXME : this fails with a ClassCastException use it as soon as RedisClient is fixed
-		 * RangeLimitOptions options = new RangeLimitOptions();
-		 * options.setLimit(0, 1);
-		 */
-		redis.zrevrangebyscore(feedHash, "+inf", "-inf", RangeLimitOptions.NONE, result -> {
-			if (result.failed()) {
-				LOG.error("Fetch max date failed : ", result.cause());
-				handler.handle(null);
-			} else {
-				JsonArray array = result.result();
-				if (array.isEmpty()) {
-					LOG.info("Fetch max date is null, array is empty for feedHash : " + feedHash);
-					handler.handle(null);
-					return;
-				}
-				JsonObject max = new JsonObject(array.getString(0));
-				String published = max.getString("published");
-				try {
-					handler.handle(FeedUtils.getDate(published));
-				} catch (ParseException pe) {
-					LOG.error("Could not fetch max date : ", pe);
-					handler.handle(null);
-				}
-			}
-		});
+	public Future<Date> getMaxDate(String feedHash) {
+		return redis.zrevrangebyscore(Arrays.asList(feedHash, "+inf", "-inf"))
+                .map(resp -> {
+                    if (resp.size() == 0) {
+                        LOG.info("Fetch max date is null, array is empty for feedHash : " + feedHash);
+                        return null;
+                    }
+                    var max = new JsonObject(resp.get(0).toString());
+                    var published = max.getString("published");
+                    try {
+                        return FeedConverters.getDate(published);
+                    } catch (ParseException pe) {
+                        LOG.error("Could not fetch max date : ", pe);
+                        return null;
+                    }
+    			});
 	}
 
-	public void insertEntries(String feedHash, List<JsonObject> entries, Handler<AsyncResult<Long>> handler) {
-		Map<String, Double> members = new HashMap<>(entries.size());
-		entries.forEach(entry -> members.put(entry.toString(), entry.getDouble("score")));
-		redis.zaddMany(feedHash, members, handler);
+	public Future<Void> insertEntries(String feedHash, List<JsonObject> entries) {
+	    var args = new ArrayList<String>();
+		args.add(feedHash);
+		entries.forEach(entry -> {
+            args.add(Double.toString(entry.getDouble("score")));
+		    args.add(entry.toString());
+        });
+		return redis
+                .zadd(args)
+                .onFailure(f ->
+                        LOG.error("Could not insert entries into redis", f)
+                )
+                .mapEmpty();
 	}
+
 }

@@ -1,7 +1,7 @@
 package io.vertx.examples.feeds.utils;
 
-import java.io.UnsupportedEncodingException;
 import java.math.BigInteger;
+import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
@@ -22,12 +22,8 @@ public class StringUtils {
 
 	public String hash256(String str) {
 		sha256.reset();
-		try {
-			sha256.update(str.getBytes("UTF-8"));
-		} catch (UnsupportedEncodingException uee) {
-			throw new RuntimeException("UTF-8 is not supported by this platform", uee);
-		}
-		byte[] digest = sha256.digest();
+        sha256.update(str.getBytes(StandardCharsets.UTF_8));
+        byte[] digest = sha256.digest();
 		return toHexString(digest);
 	}
 

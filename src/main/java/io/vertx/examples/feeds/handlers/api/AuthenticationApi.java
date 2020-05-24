@@ -1,11 +1,11 @@
 package io.vertx.examples.feeds.handlers.api;
 
-import io.vertx.core.http.HttpServerResponse;
-import io.vertx.core.json.JsonObject;
+import io.vertx.core.http.HttpHeaders;
 import io.vertx.examples.feeds.dao.MongoDAO;
 import io.vertx.examples.feeds.utils.StringUtils;
 import io.vertx.ext.web.RoutingContext;
-import io.vertx.ext.web.Session;
+
+import static io.vertx.examples.feeds.dao.MongoDAO.ID_COLUMN;
 
 public class AuthenticationApi {
 
@@ -18,52 +18,55 @@ public class AuthenticationApi {
 	private static final String INDEX = "/index.hbs";
 	private static final String USER_ID = "userId";
 
-
 	public AuthenticationApi(MongoDAO mongo) {
 		this.mongo = mongo;
 		this.strUtils = new StringUtils();
 	}
 
 	public void register(RoutingContext context) {
-		final String login = context.request().getParam(LOGIN);
-		final String pwd = context.request().getParam(PWD);
-		mongo.newUser(login, strUtils.hash256(pwd), result -> {
-			if (result.failed()) {
-				context.fail(result.cause());
-			} else {
-				redirectTo(context, "/login.hbs");
-			}
-		});
+		var login = context.request().getParam(LOGIN);
+		var pwd = context.request().getParam(PWD);
+		mongo.newUser(login, strUtils.hash256(pwd))
+                .setHandler(result -> {
+                    if (result.failed()) {
+                        context.fail(result.cause());
+                    } else {
+                        redirectTo(context, "/login.hbs");
+                    }
+                });
 	}
 
 	public void login(RoutingContext context) {
-		final String login = context.request().getParam(LOGIN);
-		final String pwd = context.request().getParam(PWD);
-		mongo.userByLoginAndPwd(login, strUtils.hash256(pwd), result -> {
-			if (result.failed()) {
-				context.fail(result.cause());
+		var login = context.request().getParam(LOGIN);
+		var pwd = context.request().getParam(PWD);
+		mongo.userByLoginAndPwd(login, strUtils.hash256(pwd))
+            .setHandler(res -> {
+			if (res.failed()) {
+				context.fail(res.cause());
 				return;
 			}
-			JsonObject user = result.result();
-			if (user == null) {
+			var maybeUser = res.result();
+			if (maybeUser.isEmpty()) {
 				redirectTo(context, "/login.hbs");
 				return;
 			}
-			Session session = context.session();
-			String accessToken = strUtils.generateToken();
-			session.put(ACCESS_TOKEN, accessToken);
-			session.put(LOGIN, login);
-			session.put(USER_ID, user.getString("_id"));
-			context.vertx().sharedData().getLocalMap("access_tokens").put(accessToken, user.getString("_id"));
+			var user = maybeUser.get();
+			var accessToken = strUtils.generateToken();
+			var userId = user.getString(ID_COLUMN);
+            context.session()
+                .put(ACCESS_TOKEN, accessToken)
+			    .put(LOGIN, login)
+                .put(USER_ID, userId);
+			context.vertx().sharedData().getLocalMap("access_tokens").put(accessToken, userId);
 			redirectTo(context, INDEX);
 		});
 	}
 
 	public void logout(RoutingContext context) {
-		final Session session = context.session();
+		var session = context.session();
 		session.remove(LOGIN);
 		session.remove(USER_ID);
-		String accessToken = session.get(ACCESS_TOKEN);
+		var accessToken = session.get(ACCESS_TOKEN);
 		if (accessToken != null) {
 			context.vertx().sharedData().getLocalMap("access_tokens").remove(accessToken);
 		}
@@ -71,11 +74,11 @@ public class AuthenticationApi {
 		redirectTo(context, "/index.hbs");
 	}
 
-	private static void redirectTo(RoutingContext context, String url) {
-		HttpServerResponse response = context.response();
-		response.setStatusCode(303);
-		response.headers().add("Location", url);
-		response.end();
+	private static void redirectTo(RoutingContext rc, String url) {
+		rc.response()
+		    .setStatusCode(303)
+		    .putHeader(HttpHeaders.LOCATION, url)
+		    .end();
 	}
 
 }
